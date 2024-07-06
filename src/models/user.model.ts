@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema<User>(
+const userSchema = new mongoose.Schema<User & mongoose.Document>(
     {
         name: {
             type: String,
@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema<User>(
         avatar: {
             type: String,
             default: "",
+            required: false,
         },
         gender: {
             type: String,
@@ -35,9 +36,11 @@ const userSchema = new mongoose.Schema<User>(
             validate: (value: string) => {
                 return value === "Female" || value === "Male";
             },
+            required: false,
         },
         dateOfBirth: {
             type: Date,
+            required: false,
         },
         bio: {
             type: String,

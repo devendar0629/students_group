@@ -1,14 +1,14 @@
 interface User {
-    name: String;
-    username: String;
-    email: String;
-    password: String;
-    isVerified: Boolean;
+    name: string;
+    username: string;
+    email: string;
+    password: string;
+    isVerified: boolean;
     dateOfBirth: Date;
-    bio: String;
+    bio: string;
     gender?: "Male" | "Female";
-    avatar?: String;
-    joinedGroups: any; // check
+    avatar?: string;
+    joinedGroups: any; // update
     createdAt: Date;
     updatedAt: Date;
 }
