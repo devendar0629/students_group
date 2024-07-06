@@ -1,5 +1,5 @@
-declare module "DB" {
-    interface User {
+declare module DB {
+    export interface User {
         name: string;
         username: string;
         email: string;
@@ -9,7 +9,7 @@ declare module "DB" {
         bio: string;
         gender?: "Male" | "Female";
         avatar?: string;
-        joinedGroups: any; // update
+        joinedGroups: any; // to be update
         createdAt: Date;
         updatedAt: Date;
     }
