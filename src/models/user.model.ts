@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema<DB.User & mongoose.Document>(
+const userSchema = new mongoose.Schema<DB.User>(
     {
         name: {
             type: String,
