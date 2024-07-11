@@ -37,5 +37,7 @@ const groupSchema = new mongoose.Schema<DB.Group>(
     }
 );
 
-const Group = mongoose.model<DB.Group>("Group", groupSchema);
+const Group =
+    (mongoose.models.Group as mongoose.Model<DB.Group>) ||
+    mongoose.model<DB.Group>("Group", groupSchema);
 export default Group;

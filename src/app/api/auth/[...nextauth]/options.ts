@@ -21,9 +21,9 @@ export const authOptions: NextAuthOptions = {
                 },
             },
             async authorize(credentials, req) {
+                // if there's no (username and email) or no password
                 if (
-                    !credentials?.email ||
-                    !credentials?.username ||
+                    (!credentials?.email && !credentials?.username) ||
                     !credentials?.password
                 ) {
                     return null;
@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 return {
-                    _id: dbUser.id,
+                    _id: dbUser._id,
                     username: dbUser.username,
                     avatar: dbUser.avatar,
                     email: dbUser.email,
@@ -92,11 +92,11 @@ export const authOptions: NextAuthOptions = {
         session: async ({ session, token }) => {
             if (token) {
                 // happens every time a session is checked
-                session._id = token._id;
-                session.username = token.username;
-                session.email = token.email;
-                session.avatar = token.avatar;
-                session.isVerified = token.isVerified;
+                session.user._id = token._id;
+                session.user.username = token.username;
+                session.user.email = token.email;
+                session.user.avatar = token.avatar;
+                session.user.isVerified = token.isVerified;
             }
 
             return session;
