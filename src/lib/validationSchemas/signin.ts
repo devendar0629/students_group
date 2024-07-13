@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const signinSchema = z.object({
-    username_or_string: z.string({
+    username_or_email: z.string({
         message: "Incorrect type received",
     }),
 

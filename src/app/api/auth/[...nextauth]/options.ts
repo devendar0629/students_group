@@ -3,6 +3,7 @@ import User from "@/models/user.model";
 import { NextAuthOptions } from "next-auth";
 import CredentialProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { signinSchema } from "@/lib/validationSchemas/signin";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -21,38 +22,38 @@ export const authOptions: NextAuthOptions = {
                 },
             },
             async authorize(credentials, req) {
-                // if there's no (username and email) or no password
-                if (
-                    (!credentials?.email && !credentials?.username) ||
-                    !credentials?.password
-                ) {
-                    return null;
+                const validatedCredentials =
+                    signinSchema.safeParse(credentials);
+
+                if (!validatedCredentials.success) {
+                    throw new Error("Invalid request payload");
                 }
 
                 await connectDB();
                 const dbUser = await User.findOne({
                     $or: [
                         {
-                            username: credentials.username,
+                            username:
+                                validatedCredentials.data.username_or_email,
                         },
                         {
-                            email: credentials.email,
+                            email: validatedCredentials.data.username_or_email,
                         },
                     ],
                 });
 
-                if (!dbUser) throw new Error("User not found");
+                if (!dbUser) throw new Error("Incorrect credentials");
                 if (!dbUser.isVerified) {
-                    throw new Error("User is not verified");
+                    throw new Error("User email is not verified");
                 }
 
                 const passwordMatch = await compare(
-                    credentials.password,
-                    dbUser?.password
+                    validatedCredentials.data.password,
+                    dbUser.password
                 );
 
                 if (!passwordMatch) {
-                    throw new Error("Incorrect password");
+                    throw new Error("Incorrect credentials");
                 }
 
                 return {
