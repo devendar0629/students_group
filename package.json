@@ -6,10 +6,12 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "email": "email dev"
     },
     "dependencies": {
         "@radix-ui/react-slot": "^1.1.0",
+        "@react-email/components": "0.0.21",
         "axios": "^1.7.2",
         "bcryptjs": "^2.4.3",
         "class-variance-authority": "^0.7.0",
