@@ -41,7 +41,7 @@ const VerificationEmail: React.FC<VerificationEmailProps> = function ({
                             marginBottom: "2.4rem",
                         }}
                     >
-                        Students Group - VerificationEmail
+                        Students Group - Verification Email
                     </h2>
 
                     <Text style={{ fontSize: ".95rem", fontWeight: "500" }}>

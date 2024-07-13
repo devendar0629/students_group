@@ -5,12 +5,14 @@ import { genSalt, hash } from "bcryptjs";
 import { ZodError } from "zod";
 import resend from "@/lib/config/resend.config";
 import VerificationEmail from "@/../emails/VerificationEmail";
-import crypto from "node:crypto";
+import { randomInt as cryptoRandomInt } from "node:crypto";
 import Token from "@/models/token.model";
+import { connectDB } from "@/lib/db.config";
 
 export async function POST(
     request: NextRequest
 ): Promise<NextResponse<ApiResponse>> {
+    await connectDB();
     try {
         const data = await request.json();
         const validatedData = signupSchema.parse(data);
@@ -48,7 +50,7 @@ export async function POST(
             password: hashedPassword,
         });
 
-        const verificationCode = crypto.randomInt(100000, 1000000).toString();
+        const verificationCode = cryptoRandomInt(100000, 1000000).toString();
         const tokenInstance = await Token.create({
             user: newUser._id.toString(),
             verificationCode,
@@ -58,13 +60,15 @@ export async function POST(
         const mailResponse = await resend.emails.send({
             from: "onboarding@resend.dev",
             subject: "Verification code",
-            to: newUser.email,
+            to: process.env.TEST_RECEIVER_MAIL!, // CHANGE IN PRODUCTION !
             html: "",
             react: VerificationEmail({
-                name: newUser.username ?? newUser.email,
+                name: newUser.name,
                 verificationCode,
             }),
         });
+
+        console.log("Mail Response: ", mailResponse);
 
         const responseUser = newUser.toObject();
         delete (responseUser as any).password; // CHECK
