@@ -4,67 +4,56 @@ import { outfit } from "@/app/ui/fonts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import axios from "@/lib/config/axios.config";
+import { signIn } from "next-auth/react";
 import {
-    type SignupSchema,
-    signupSchema,
-} from "@/lib/validationSchemas/signup";
+    type SigninSchema,
+    signinSchema,
+} from "@/lib/validationSchemas/signin";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
 import { EyeIcon, EyeOffIcon, LoaderCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 interface PageProps {}
 
-const Signup: React.FC<PageProps> = function () {
+const Signin: React.FC<PageProps> = function () {
     const {
         formState: { isSubmitting, errors },
         register,
         setError,
         handleSubmit,
-    } = useForm<SignupSchema>({
-        resolver: zodResolver(signupSchema),
+    } = useForm<SigninSchema>({
+        resolver: zodResolver(signinSchema),
     });
 
     const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
     const { toast } = useToast();
+    const router = useRouter();
 
-    const handleSignup: SubmitHandler<SignupSchema> = async (formData) => {
+    const handleSignin: SubmitHandler<SigninSchema> = async (formData) => {
         try {
-            const response = await axios.post("/api/v1/auth/signup", {
-                name: formData.name,
-                username: formData.username,
-                email: formData.email,
+            const response = await signIn("credentials", {
+                username_or_email: formData.username_or_email,
                 password: formData.password,
+                redirect: false,
             });
 
-            if (response.status !== 201) {
-                setError("root", {
-                    message: response.data.error.message,
-                });
-            }
-
-            toast({
-                title: "Signed up successfully",
-                className: "bg-green-700 text-slate-100",
-            });
-        } catch (error) {
-            if (error instanceof AxiosError) {
-                if (error.status! >= 400) {
-                    toast({
-                        title: "Error",
-                        description: error.response?.data?.error?.message,
-                        variant: "destructive",
-                    });
-                }
-            } else
+            if (response?.ok) {
+                router.replace("/"); // CHECK
+            } else {
                 toast({
-                    title: "Something went wrong",
-                    description: "Try again later",
+                    title: "Error",
+                    description: response?.error,
                     variant: "destructive",
                 });
+            }
+        } catch (error) {
+            toast({
+                title: "Error signing in",
+                variant: "destructive",
+            });
         }
     };
 
@@ -75,54 +64,24 @@ const Signup: React.FC<PageProps> = function () {
             >
                 <div className="lg:w-[555px] p-5 flex flex-col flex-nowrap tracking-wider">
                     <h2 className="text-center text-[2.5rem] font-semibold">
-                        Signup to Students Group
+                        Signin to Students Group
                     </h2>
 
                     <form
-                        className="flex mt-10 flex-col flex-nowrap gap-3.5"
-                        onSubmit={handleSubmit(handleSignup)}
+                        className="flex mt-14 flex-col flex-nowrap gap-3.5"
+                        onSubmit={handleSubmit(handleSignin)}
                     >
                         <div className="flex flex-col justify-center gap-1.5">
-                            <label className="ml-px">Name</label>
+                            <label className="ml-px">Username or Email</label>
                             <Input
                                 type="text"
                                 className="pl-4 py-[1.4rem] pb-[1.5rem] text-[1.05rem] focus:ring-1 focus:outline-gray-500 focus:ring-offset-2"
-                                placeholder="Name"
-                                {...register("name")}
+                                placeholder="Username or Email"
+                                {...register("username_or_email")}
                             />
-                            {errors.name && (
+                            {errors.username_or_email && (
                                 <p className="text-red-500 text-center font-light mt-0.5 text-[.95rem]">
-                                    {errors.name.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col justify-center gap-1.5">
-                            <label className="ml-px">Username</label>
-                            <Input
-                                type="text"
-                                className="pl-4 py-[1.4rem] pb-[1.5rem] text-[1.05rem] focus:ring-1 focus:outline-gray-500 focus:ring-offset-1"
-                                placeholder="Username"
-                                {...register("username")}
-                            />
-                            {errors.username && (
-                                <p className="text-red-500 text-center font-light mt-0.5 text-[.95rem]">
-                                    {errors.username.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col justify-center gap-1.5">
-                            <label className="ml-px">Email</label>
-                            <Input
-                                type="text"
-                                className="pl-4 py-[1.4rem] pb-[1.5rem] text-[1.05rem] focus:ring-1 focus:outline-gray-500 focus:ring-offset-1"
-                                placeholder="example@mail.com"
-                                {...register("email")}
-                            />
-                            {errors.email && (
-                                <p className="text-red-500 text-center font-light mt-0.5 text-[.95rem]">
-                                    {errors.email.message}
+                                    {errors.username_or_email.message}
                                 </p>
                             )}
                         </div>
@@ -159,14 +118,14 @@ const Signup: React.FC<PageProps> = function () {
                         </div>
 
                         <Button
-                            className="flex py-[1.4rem] pb-[1.5rem] text-[1.05rem] flex-row mt-4 flex-nowrap justify-center lg:gap-2.5 gap-2 items-center"
+                            className="flex py-[1.4rem] pb-[1.5rem] text-[1.05rem] flex-row mt-4 flex-nowrap justify-center lg:gap-2.5 gap-2 items-center disabled:cursor-not-allowed"
                             disabled={isSubmitting}
                             variant={"secondary"}
                         >
                             {isSubmitting && (
                                 <LoaderCircle className="animate-spin h-[1.35rem]" />
                             )}
-                            Signup
+                            Signin
                         </Button>
                         {errors.root && (
                             <p className="text-red-500 text-center font-light mt-0.5 text-[.95rem]">
@@ -176,12 +135,12 @@ const Signup: React.FC<PageProps> = function () {
                     </form>
 
                     <p className="mt-4 text-[1.075rem]">
-                        Already a member ? &nbsp;
+                        Not a member ? &nbsp;
                         <Link
                             className="hover:underline text-blue-500 decoration-2 decoration-blue-500 underline-offset-[5.5px]"
-                            href={"/signin"}
+                            href={"/signup"}
                         >
-                            Signin
+                            Signup
                         </Link>
                     </p>
                 </div>
@@ -190,4 +149,4 @@ const Signup: React.FC<PageProps> = function () {
     );
 };
 
-export default Signup;
+export default Signin;

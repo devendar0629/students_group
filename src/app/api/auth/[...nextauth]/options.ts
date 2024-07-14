@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 await connectDB();
-                const dbUser = await User.findOne({
+                const dbUserExists = await User.exists({
                     $or: [
                         {
                             username:
@@ -42,8 +42,31 @@ export const authOptions: NextAuthOptions = {
                     ],
                 });
 
-                if (!dbUser) throw new Error("Incorrect credentials");
-                if (!dbUser.isVerified) {
+                if (!dbUserExists) throw new Error("Incorrect credentials");
+
+                // to check if the user is verified
+                const dbUser = await User.findOne({
+                    $and: [
+                        {
+                            $or: [
+                                {
+                                    username:
+                                        validatedCredentials.data
+                                            .username_or_email,
+                                },
+                                {
+                                    email: validatedCredentials.data
+                                        .username_or_email,
+                                },
+                            ],
+                        },
+                        {
+                            isVerified: true,
+                        },
+                    ],
+                });
+
+                if (!dbUser?.isVerified) {
                     throw new Error("User email is not verified");
                 }
 

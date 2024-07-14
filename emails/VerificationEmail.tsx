@@ -1,14 +1,16 @@
-import { Html, Body, Head, Text, Font } from "@react-email/components";
+import { Html, Body, Head, Text, Font, Link } from "@react-email/components";
 import EmailFooter from "./EmailFooter";
 import { outfit } from "@/app/ui/fonts";
 
 interface VerificationEmailProps {
     name: string;
+    user_id: string;
     verificationCode: string;
 }
 
 const VerificationEmail: React.FC<VerificationEmailProps> = function ({
     name,
+    user_id,
     verificationCode,
 }) {
     return (
@@ -62,8 +64,24 @@ const VerificationEmail: React.FC<VerificationEmailProps> = function ({
                     </Text>
 
                     <Text>Verification code: {verificationCode}</Text>
-                    <br />
 
+                    <Link
+                        style={{
+                            color: "#eee",
+                            backgroundColor: "#121",
+                            borderRadius: ".4rem",
+                            paddingBlock: ".5rem",
+                            paddingInline: "1rem",
+                            display: "inline-block",
+                            fontSize: ".9rem",
+                        }}
+                        href={`http://localhost:3000/verify/${user_id}`}
+                    >
+                        Verify
+                    </Link>
+
+                    <br />
+                    <br />
                     <hr />
                     <br />
                     <EmailFooter />

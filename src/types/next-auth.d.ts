@@ -5,7 +5,7 @@ import type { JWT } from "next-auth/jwt";
 interface AuthUser {
     _id: string | Types.ObjectId;
     username: string;
-    avatar?: string;
+    avatar?: string | null | undefined;
     isVerified: boolean;
 }
 

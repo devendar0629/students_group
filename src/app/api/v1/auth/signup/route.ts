@@ -17,23 +17,30 @@ export async function POST(
         const data = await request.json();
         const validatedData = signupSchema.parse(data);
 
-        const userAlreadyExists = await User.findOne({
-            $or: [
+        const verifiedUserAlreadyExists = await User.findOne({
+            $and: [
                 {
-                    email: validatedData.email.trim(),
+                    $or: [
+                        {
+                            email: validatedData.email.trim(),
+                        },
+                        {
+                            username: validatedData.username.trim(),
+                        },
+                    ],
                 },
                 {
-                    username: validatedData.username.trim(),
+                    isVerified: true,
                 },
             ],
         });
 
-        if (userAlreadyExists?.isVerified) {
+        if (verifiedUserAlreadyExists) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message: "Username or email already taken",
+                        message: "Username (and/or) email already taken",
                     },
                 },
                 { status: 400 }
@@ -52,10 +59,12 @@ export async function POST(
 
         const verificationCode = cryptoRandomInt(100000, 1000000).toString();
         const tokenInstance = await Token.create({
-            user: newUser._id.toString(),
+            user: newUser._id,
             verificationCode,
             verificationCodeExpiry: new Date(Date.now() + 300000), // 5 minutes
         });
+
+        await newUser.save();
 
         const mailResponse = await resend.emails.send({
             from: "onboarding@resend.dev",
@@ -65,13 +74,13 @@ export async function POST(
             react: VerificationEmail({
                 name: newUser.name,
                 verificationCode,
+                user_id: newUser._id.toString(),
             }),
         });
 
-        console.log("Mail Response: ", mailResponse);
-
         const responseUser = newUser.toObject();
-        delete (responseUser as any).password; // CHECK
+
+        delete (responseUser as any).password;
 
         return NextResponse.json(
             {
