@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
 
-const tokenSchema = new mongoose.Schema<DB.Token>(
+const tokenSchema = new mongoose.Schema(
     {
         user: {
             type: mongoose.Schema.Types.ObjectId,
@@ -19,7 +19,10 @@ const tokenSchema = new mongoose.Schema<DB.Token>(
     }
 );
 
+export type Token = InferSchemaType<typeof tokenSchema>;
+
 const Token =
-    (mongoose.models.Token as mongoose.Model<DB.Token>) ||
-    mongoose.model<DB.Token>("Token", tokenSchema);
+    (mongoose.models.Token as mongoose.Model<Token>) ||
+    mongoose.model<Token>("Token", tokenSchema);
+
 export default Token;

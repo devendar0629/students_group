@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
 
-const messageSchema = new mongoose.Schema<DB.Message>(
+const messageSchema = new mongoose.Schema(
     {
         sender: {
             type: mongoose.Schema.Types.ObjectId,
@@ -21,7 +21,10 @@ const messageSchema = new mongoose.Schema<DB.Message>(
     }
 );
 
+export type Message = InferSchemaType<typeof messageSchema>;
+
 const Message =
-    (mongoose.models.Message as mongoose.Model<DB.Message>) ||
-    mongoose.model<DB.Message>("Message", messageSchema);
+    (mongoose.models.Message as mongoose.Model<Message>) ||
+    mongoose.model<Message>("Message", messageSchema);
+
 export default Message;

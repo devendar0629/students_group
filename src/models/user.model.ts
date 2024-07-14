@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
 
-const userSchema = new mongoose.Schema<DB.User>(
+const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
@@ -9,12 +9,10 @@ const userSchema = new mongoose.Schema<DB.User>(
         username: {
             type: String,
             required: [true, "Name is required"],
-            unique: true,
         },
         email: {
             type: String,
             required: [true, "Email is required"],
-            unique: true,
         },
         password: {
             type: String,
@@ -58,8 +56,10 @@ const userSchema = new mongoose.Schema<DB.User>(
     }
 );
 
+export type User = InferSchemaType<typeof userSchema>;
+
 const User =
-    (mongoose.models.User as mongoose.Model<DB.User>) ||
-    mongoose.model<DB.User>("User", userSchema);
+    (mongoose.models.User as mongoose.Model<User>) ||
+    mongoose.model<User>("User", userSchema);
 
 export default User;

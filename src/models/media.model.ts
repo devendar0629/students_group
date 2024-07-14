@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
 
-const mediaSchema = new mongoose.Schema<DB.Media>(
+const mediaSchema = new mongoose.Schema(
     {
         sender: {
             type: mongoose.Schema.Types.ObjectId,
@@ -17,7 +17,10 @@ const mediaSchema = new mongoose.Schema<DB.Media>(
     }
 );
 
+export type Media = InferSchemaType<typeof mediaSchema>;
+
 const Media =
-    (mongoose.models.Media as mongoose.Model<DB.Media>) ||
-    mongoose.model<DB.Media>("Media", mediaSchema);
+    (mongoose.models.Media as mongoose.Model<Media>) ||
+    mongoose.model<Media>("Media", mediaSchema);
+
 export default Media;

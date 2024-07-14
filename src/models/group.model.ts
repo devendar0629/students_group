@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
 
-const groupSchema = new mongoose.Schema<DB.Group>(
+const groupSchema = new mongoose.Schema(
     {
         admin: {
             type: mongoose.Schema.Types.ObjectId,
@@ -37,7 +37,10 @@ const groupSchema = new mongoose.Schema<DB.Group>(
     }
 );
 
+export type Group = InferSchemaType<typeof groupSchema>;
+
 const Group =
-    (mongoose.models.Group as mongoose.Model<DB.Group>) ||
-    mongoose.model<DB.Group>("Group", groupSchema);
+    (mongoose.models.Group as mongoose.Model<Group>) ||
+    mongoose.model<Group>("Group", groupSchema);
+
 export default Group;
