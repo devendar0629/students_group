@@ -159,7 +159,7 @@ const Signup: React.FC<PageProps> = function () {
                         </div>
 
                         <Button
-                            className="flex py-[1.4rem] pb-[1.5rem] text-[1.05rem] flex-row mt-4 flex-nowrap justify-center lg:gap-2.5 gap-2 items-center"
+                            className="flex select-none py-[1.4rem] pb-[1.5rem] text-[1.15rem] flex-row mt-4 flex-nowrap justify-center lg:gap-2.5 gap-2 items-center"
                             disabled={isSubmitting}
                             variant={"secondary"}
                         >
