@@ -18,6 +18,22 @@ export async function POST(
 
         const validatedData = createGroupSchema.parse(data);
 
+        if (validatedData.members && validatedData.members.length === 0) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Group members count should atleast be 1",
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        if (validatedData.members) {
+            validatedData.members.push(token!._id.toString());
+        }
+
         const newGroup = await Group.create({
             name: validatedData.name,
             description: validatedData.description,
@@ -29,6 +45,7 @@ export async function POST(
         return NextResponse.json(
             {
                 success: true,
+                message: "Group created successfully",
                 data: {
                     group: newGroup,
                 },
