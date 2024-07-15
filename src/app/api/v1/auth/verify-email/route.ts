@@ -14,7 +14,7 @@ export async function POST(
         const validatedData = verifyEmailSchema.parse(data);
 
         const userData = await User.findOne({
-            _id: validatedData.user_id,
+            _id: decodeURIComponent(validatedData.user_id),
         }).select("-password");
 
         if (!userData) {

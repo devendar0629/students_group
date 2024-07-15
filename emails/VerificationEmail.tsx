@@ -75,7 +75,9 @@ const VerificationEmail: React.FC<VerificationEmailProps> = function ({
                             display: "inline-block",
                             fontSize: ".9rem",
                         }}
-                        href={`http://localhost:3000/verify/${user_id}`}
+                        href={`http://localhost:3000/verify/${encodeURIComponent(
+                            user_id
+                        )}`}
                     >
                         Verify
                     </Link>
