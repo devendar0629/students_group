@@ -91,15 +91,11 @@ export const authOptions: NextAuthOptions = {
     ],
     callbacks: {
         signIn: ({ user }) => {
-            if (user.isVerified === false) {
-                // The user has passed the correct credentials but they aren't verified
+            if (user && user.isVerified === false) {
                 return false;
-            } else if (user.isVerified === true) {
-                return true;
             }
 
-            // handle unexpected behaviour
-            return false;
+            return true;
         },
         jwt: async ({ token, user }) => {
             if (user) {
@@ -124,12 +120,6 @@ export const authOptions: NextAuthOptions = {
             }
 
             return session;
-        },
-        redirect: ({ url, baseUrl }) => {
-            // TEST: just for testing purpose, this have no real use case
-            console.log("redirect url: ", url);
-            console.log("redirect baseUrl: ", baseUrl);
-            return baseUrl;
         },
     },
     session: {

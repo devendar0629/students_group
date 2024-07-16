@@ -41,7 +41,16 @@ const Signin: React.FC<PageProps> = function () {
             });
 
             if (response?.ok) {
-                router.replace("/"); // CHECK
+                const successToast = toast({
+                    title: "Signin success",
+                    description: "Redirecting to home page ...",
+                    className: "bg-green-700 text-slate-100",
+                });
+
+                setTimeout(() => {
+                    successToast.dismiss();
+                    router.replace("/");
+                }, 750);
             } else {
                 toast({
                     title: "Error",
