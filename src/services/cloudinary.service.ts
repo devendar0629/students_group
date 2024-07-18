@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary, UploadApiOptions } from "cloudinary";
 
 export class UploadService {
     constructor() {
@@ -9,17 +9,23 @@ export class UploadService {
         });
     }
 
-    async uploadImage(localFilePath: string, folder: string = "") {
+    async uploadImage(localFilePath: string, options?: UploadApiOptions) {
         return cloudinary.uploader.upload(localFilePath, {
-            folder,
             resource_type: "image",
+            ...options,
         });
     }
 
-    async uploadVideo(localFilePath: string, folder: string = "") {
+    async uploadVideo(localFilePath: string, options?: UploadApiOptions) {
         return cloudinary.uploader.upload(localFilePath, {
-            folder,
             resource_type: "video",
+            ...options,
+        });
+    }
+
+    async uploadAny(localFilePath: string, options?: UploadApiOptions) {
+        return cloudinary.uploader.upload(localFilePath, {
+            ...options,
         });
     }
 }

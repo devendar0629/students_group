@@ -21,28 +21,33 @@ export const sendMessageSchema = z.object({
             message: "Message field is required",
         }),
 
-    mediaFile: z
-        .any()
-        .optional()
-        .refine(
-            (value) => {
-                return value instanceof File;
-            },
-            {
-                message: "Invalid file",
+    mediaFile: z.union([
+        z.any().optional(),
+        z.custom((value) => {
+            if (!value) return true;
+
+            if (!(value instanceof File)) {
+                throw new z.ZodError([
+                    {
+                        path: [""],
+                        code: "custom",
+                        message: "Invalid File Type",
+                    },
+                ]);
             }
-        )
-        .refine(
-            (value) => {
-                return value.size <= 1024 * 1024 * 512;
-            },
-            {
-                message: "File size cannot exceed 0.1 MB",
+
+            if (value.size > 1024 * 1024 * 512) {
+                throw new z.ZodError([
+                    {
+                        path: [""],
+                        code: "custom",
+                        message: "File size shouldn't exceed 512 MB",
+                    },
+                ]);
             }
-        )
-        .refine(
-            (value) => {
-                return [
+
+            if (
+                ![
                     "image/jpeg",
                     "image/jpg",
                     "image/png",
@@ -52,8 +57,18 @@ export const sendMessageSchema = z.object({
                     "video/mpeg",
                     "application/pdf",
                     "application/msword",
-                ].includes(value.type);
-            },
-            { message: "File format not accepted" }
-        ),
+                ].includes(value.type)
+            ) {
+                throw new z.ZodError([
+                    {
+                        path: [""],
+                        code: "custom",
+                        message: "File format not accepted",
+                    },
+                ]);
+            }
+
+            return true;
+        }),
+    ]),
 });
