@@ -2,6 +2,10 @@ import mongoose, { InferSchemaType } from "mongoose";
 
 const mediaSchema = new mongoose.Schema(
     {
+        fileName: {
+            type: String,
+            required: [true, "file name field is required"],
+        },
         sender: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
