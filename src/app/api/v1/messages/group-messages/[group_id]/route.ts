@@ -149,7 +149,10 @@ export async function POST(
 }
 
 // Fetch all messages of a group
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+    request: NextRequest,
+    { params }: RouteParams
+): Promise<NextResponse<ApiResponse>> {
     await connectDB();
     try {
         const group_id = params.group_id;
