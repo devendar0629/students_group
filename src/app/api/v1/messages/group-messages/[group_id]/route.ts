@@ -12,6 +12,7 @@ import uploaderService from "@/services/cloudinary.service";
 import { getToken } from "next-auth/jwt";
 import { connectDB } from "@/lib/db.config";
 import Group from "@/models/group.model";
+import { isValidObjectId, Types } from "mongoose";
 
 interface RouteParams {
     params: {
@@ -19,6 +20,7 @@ interface RouteParams {
     };
 }
 
+// Send a message in a given group
 export async function POST(
     request: NextRequest,
     { params }: RouteParams
@@ -139,6 +141,99 @@ export async function POST(
                 success: false,
                 error: {
                     message: "Something went wrong, while sending the message",
+                },
+            },
+            { status: 500 }
+        );
+    }
+}
+
+// Fetch all messages of a group
+export async function GET(request: NextRequest, { params }: RouteParams) {
+    await connectDB();
+    try {
+        const group_id = params.group_id;
+
+        if (!isValidObjectId(group_id)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Invalid group id",
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        if (
+            !(await Group.exists({
+                _id: group_id,
+            }))
+        ) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Group not found",
+                    },
+                },
+                { status: 404 }
+            );
+        }
+
+        const group_messages = await Group.aggregate([
+            {
+                $match: {
+                    _id: new Types.ObjectId(group_id),
+                },
+            },
+            {
+                $lookup: {
+                    from: "messages",
+                    foreignField: "_id",
+                    localField: "messages",
+                    as: "messages",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "media",
+                                localField: "mediaFile",
+                                foreignField: "_id",
+                                as: "mediaFile",
+                            },
+                        },
+                        {
+                            $unwind: {
+                                path: "$mediaFile",
+                                preserveNullAndEmptyArrays: true,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $project: {
+                    messages: 1,
+                },
+            },
+        ]);
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Group messages fetched successfully",
+                data: group_messages[0],
+            },
+            { status: 200 }
+        );
+    } catch (error) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message:
+                        "Something went wrong, while fetching the group's messages",
                 },
             },
             { status: 500 }
