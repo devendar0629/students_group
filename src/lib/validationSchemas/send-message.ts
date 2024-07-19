@@ -1,7 +1,18 @@
 import { isValidObjectId } from "mongoose";
 import { z } from "zod";
 
-export const sendMessageSchema = z.object({
+export const sendMessageInGroupSchema = z.object({
+    group_id: z
+        .string({
+            message: "group id must be an string",
+        })
+        .refine(
+            (value) => {
+                return isValidObjectId(value);
+            },
+            { message: "Invalid group id" }
+        ),
+
     sender: z
         .string({
             message: "Sender must be an string",

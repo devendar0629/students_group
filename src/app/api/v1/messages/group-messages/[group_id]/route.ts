@@ -6,37 +6,61 @@ import fs from "fs";
 import { unlink as unlinkAsync } from "fs/promises";
 import { Readable } from "stream";
 import Message from "@/models/message.model";
-import { sendMessageSchema } from "@/lib/validationSchemas/send-message";
+import { sendMessageInGroupSchema } from "@/lib/validationSchemas/send-message";
 import Media from "@/models/media.model";
 import uploaderService from "@/services/cloudinary.service";
 import { getToken } from "next-auth/jwt";
 import { connectDB } from "@/lib/db.config";
+import Group from "@/models/group.model";
+
+interface RouteParams {
+    params: {
+        group_id: string;
+    };
+}
 
 export async function POST(
-    request: NextRequest
+    request: NextRequest,
+    { params }: RouteParams
 ): Promise<NextResponse<ApiResponse>> {
     await connectDB();
     try {
+        const group_id = params.group_id;
+
         const formData = await request.formData();
         const userToken = await getToken({
             req: request,
         });
 
-        const mediaFile = formData.get("mediaFile") as File | null;
+        const mediaFile = formData.get("mediaFile");
         const content = formData.get("content");
         const sender = userToken?._id;
 
-        let validatedData = sendMessageSchema.parse({
+        // DATA VALIDATION
+        let validatedData = sendMessageInGroupSchema.parse({
             sender,
             content,
+            group_id,
             mediaFile,
         });
+
+        const group = await Group.findById(validatedData.group_id);
+        if (!group) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: { message: "Group not found" },
+                },
+                { status: 404 }
+            );
+        }
 
         let newMessage = new Message({
             sender: userToken?._id,
             content: validatedData.content,
         });
 
+        // File upload logic
         if (
             validatedData.mediaFile &&
             validatedData.mediaFile !== "undefined"
@@ -61,7 +85,7 @@ export async function POST(
 
             const uploadResponse = await uploaderService.uploadAny(
                 expectedLocalPathToFile,
-                { folder: "uploads/media" }
+                { folder: "uploads/media", resource_type: "auto" }
             );
 
             await unlinkAsync(expectedLocalPathToFile);
@@ -76,11 +100,17 @@ export async function POST(
             newMessage.mediaFile = newMedia._id;
         }
 
+        // Save the sent message
         let savedMessage = await newMessage.save();
 
+        // Populate the mediaFile
         if (validatedData.mediaFile) {
             savedMessage = await savedMessage.populate("mediaFile");
         }
+
+        // Push the new message into the group's messages
+        group.messages.push(savedMessage._id);
+        await group.save();
 
         return NextResponse.json(
             {
