@@ -30,9 +30,9 @@ const userSchema = new mongoose.Schema(
         },
         gender: {
             type: String,
-            enum: ["Male", "Female"],
+            enum: ["MALE", "FEMALE", "RATHER-NOT-SAY"],
             validate: (value: string) => {
-                return value === "Female" || value === "Male";
+                return ["MALE", "FEMALE", "RATHER-NOT-SAY"].includes(value);
             },
             required: false,
         },
