@@ -52,7 +52,6 @@ const Verify: React.FC<PageProps> = function () {
             setIsSubmitting(false);
 
             if (error instanceof AxiosError && error.response!?.status >= 400) {
-                console.log("here 1");
                 toast({
                     title: "Error",
                     description: error.response?.data?.error?.message,

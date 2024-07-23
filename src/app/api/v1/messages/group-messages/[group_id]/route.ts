@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
-import { pipeline } from "stream/promises";
 import { ZodError } from "zod";
-import fs from "fs";
-import { unlink as unlinkAsync } from "fs/promises";
-import { Readable } from "stream";
+import fs from "fs/promises";
 import Message from "@/models/message.model";
 import { sendMessageInGroupSchema } from "@/lib/validationSchemas/send-message";
 import Media from "@/models/media.model";
@@ -13,6 +10,7 @@ import { getToken } from "next-auth/jwt";
 import { connectDB } from "@/lib/db.config";
 import Group from "@/models/group.model";
 import { isValidObjectId, Types } from "mongoose";
+import { uploadFileToDisk } from "@/utils/uploadFileToDisk";
 
 interface RouteParams {
     params: {
@@ -69,7 +67,6 @@ export async function POST(
         ) {
             const file = validatedData.mediaFile as File;
 
-            const fileBuffer = Buffer.from(await file.arrayBuffer());
             const randomNumber =
                 Math.floor(Math.random() * (999999998 - 100000001 + 1)) +
                 100000001;
@@ -80,17 +77,14 @@ export async function POST(
                 randomNumber + "--" + file.name
             );
 
-            await pipeline(
-                Readable.from(fileBuffer),
-                fs.createWriteStream(expectedLocalPathToFile)
-            );
+            await uploadFileToDisk(file, expectedLocalPathToFile);
 
             const uploadResponse = await uploaderService.uploadAny(
                 expectedLocalPathToFile,
-                { folder: "uploads/media", resource_type: "auto" }
+                { folder: "posts/media", resource_type: "auto" }
             );
 
-            await unlinkAsync(expectedLocalPathToFile);
+            await fs.unlink(expectedLocalPathToFile);
 
             const newMedia = new Media({
                 fileName: randomNumber + file.name,
@@ -123,7 +117,6 @@ export async function POST(
             { status: 201 }
         );
     } catch (error) {
-        console.log(error);
         if (error instanceof ZodError) {
             return NextResponse.json(
                 {
