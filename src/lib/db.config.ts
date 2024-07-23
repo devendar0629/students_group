@@ -38,6 +38,7 @@ export const connectDB = async () => {
         .catch((err: any) => {
             cachedConnection.connection = null;
             console.error("🍀❌ MongoDB connection failed.");
+            console.log("ERROR: ", err);
             process.exit(1);
         });
 };
