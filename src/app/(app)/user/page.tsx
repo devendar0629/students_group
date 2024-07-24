@@ -38,7 +38,7 @@ const Page: React.FC<PageProps> = async function (request) {
                         <li className="w-[83%] py-2.5 rounded-md mx-auto hover:bg-slate-800 h-[calc(100%+800px)]">
                             <Link
                                 className="w-full h-full block"
-                                href={"/user?tab=account_details"}
+                                href={"/user?tab=account-details"}
                             >
                                 Account Details
                             </Link>
