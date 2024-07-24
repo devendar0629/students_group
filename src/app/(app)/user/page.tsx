@@ -5,6 +5,8 @@ import Profile from "./profile";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import axios from "@/lib/config/axios.config";
+import Account_details from "./account_details";
+import Settings from "./settings";
 
 interface PageProps {
     params?: { [index: string]: string };
@@ -65,7 +67,16 @@ const Page: React.FC<PageProps> = async function (request) {
                             <Profile user={response.data?.data} />
                         </>
                     )}
-                    {currentTab === "settings" && <>Settings</>}
+                    {currentTab === "settings" && (
+                        <>
+                            <Settings />
+                        </>
+                    )}
+                    {currentTab === "account-details" && (
+                        <>
+                            <Account_details user={response.data?.data} />
+                        </>
+                    )}
                 </section>
             </main>
         </>
