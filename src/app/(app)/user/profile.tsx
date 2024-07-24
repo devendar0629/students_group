@@ -132,6 +132,9 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
 
                         {/* Name */}
                         <div>
+                            <label className="text-[1rem] text-[#ccc] inline-block mb-1 font-light pl-[1.5px]">
+                                Name
+                            </label>
                             <Input
                                 placeholder="Your name"
                                 className="pl-4 py-6 w-[550px]"
@@ -147,7 +150,10 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
                         </div>
 
                         {/* Bio */}
-                        <div>
+                        <div className="flex flex-col flex-nowrap">
+                            <label className="text-[1rem] inline-block mb-1 text-[#ccc] font-light pl-[1.5px]">
+                                Bio
+                            </label>
                             <textarea
                                 disabled={isSubmitting}
                                 {...register("bio")}
@@ -162,7 +168,10 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
                         </div>
 
                         {/* Gender */}
-                        <div className="w-[550px]">
+                        <div className="w-[550px] mt-2">
+                            <label className="text-[1rem] block mb-1 text-[#ccc] font-light pl-[1.5px]">
+                                Gender
+                            </label>
                             <select
                                 className="rounded-md px-3 cursor-pointer py-2 bg-[#020817] border-[1px] border-slate-800 text-[#eee] text-[.925rem]"
                                 {...register("gender")}
@@ -182,12 +191,12 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
                         </div>
 
                         {/* Date of birth */}
-                        <div className="relative w-fit mt-4 flex flex-row flex-nowrap items-baseline gap-4">
-                            <label className="text-[.925rem] pl-px">
+                        <div className="relative w-fit mt-4 flex flex-col flex-nowrap items-baseline">
+                            <label className="text-[1rem] inline-block text-[#ccc] font-light pl-[1.5px] mb-1">
                                 Date of birth
                             </label>
 
-                            <div className="relative inline-block mt-1">
+                            <div className="relative inline-block">
                                 <input
                                     defaultValue={
                                         (user.dateOfBirth &&
