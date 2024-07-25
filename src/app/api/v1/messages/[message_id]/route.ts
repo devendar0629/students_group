@@ -112,3 +112,69 @@ export async function GET(
         );
     }
 }
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: RouteParams
+): Promise<NextResponse<ApiResponse>> {
+    try {
+        const message_id = params.message_id;
+
+        if (!isValidObjectId(message_id)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Invalid message id",
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        if (!(await Message.exists({ _id: new Types.ObjectId(message_id) }))) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Message not found",
+                    },
+                },
+                { status: 404 }
+            );
+        }
+
+        const response = await Message.findByIdAndDelete(message_id);
+
+        if (!response) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message:
+                            "Something went wrong while deleting the message",
+                    },
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Message deleted successfully",
+            },
+            { status: 500 }
+        );
+    } catch (error) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: "Something went wrong while fetching the message",
+                },
+            },
+            { status: 500 }
+        );
+    }
+}
