@@ -86,7 +86,7 @@ export async function POST(
             {
                 success: true,
                 message: "User signed up successfully",
-                data: { responseUser },
+                data: { user: responseUser },
             },
             { status: 201 }
         );
