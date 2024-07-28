@@ -6,8 +6,12 @@ export async function middleware(request: NextRequest) {
         req: request,
     });
 
-    if (request.nextUrl.pathname.startsWith("/api/auth"))
+    if (
+        request.nextUrl.pathname.startsWith("/api/auth") ||
+        request.nextUrl.pathname.startsWith("/api/v1/auth")
+    ) {
         return NextResponse.next();
+    }
 
     const publicRouteRegex = /^\/(verify|signin|signup)/;
     const isPublicRoute = publicRouteRegex.test(request.nextUrl.pathname);
