@@ -50,16 +50,28 @@ const userSchema = new mongoose.Schema(
                 ref: "Group",
             },
         ],
+        friends: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+        ],
+        pendingInvitesAndRequests: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "FriendRequest",
+            },
+        ],
     },
     {
         timestamps: true,
     }
 );
 
-export type User = InferSchemaType<typeof userSchema>;
+export type TUser = InferSchemaType<typeof userSchema>;
 
 const User =
-    (mongoose.models.User as mongoose.Model<User>) ||
-    mongoose.model<User>("User", userSchema);
+    (mongoose.models.User as mongoose.Model<TUser>) ||
+    mongoose.model<TUser>("User", userSchema);
 
 export default User;

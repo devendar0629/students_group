@@ -19,10 +19,10 @@ const tokenSchema = new mongoose.Schema(
     }
 );
 
-export type Token = InferSchemaType<typeof tokenSchema>;
+export type TToken = InferSchemaType<typeof tokenSchema>;
 
 const Token =
-    (mongoose.models.Token as mongoose.Model<Token>) ||
-    mongoose.model<Token>("Token", tokenSchema);
+    (mongoose.models.Token as mongoose.Model<TToken>) ||
+    mongoose.model<TToken>("Token", tokenSchema);
 
 export default Token;

@@ -21,10 +21,10 @@ const mediaSchema = new mongoose.Schema(
     }
 );
 
-export type Media = InferSchemaType<typeof mediaSchema>;
+export type TMedia = InferSchemaType<typeof mediaSchema>;
 
 const Media =
-    (mongoose.models.Media as mongoose.Model<Media>) ||
-    mongoose.model<Media>("Media", mediaSchema);
+    (mongoose.models.Media as mongoose.Model<TMedia>) ||
+    mongoose.model<TMedia>("Media", mediaSchema);
 
 export default Media;

@@ -8,7 +8,7 @@ import {
     UpdateProfileSchema,
     updateProfileSchema,
 } from "@/lib/validationSchemas/update-profile";
-import { type User } from "@/models/user.model";
+import { type TUser } from "@/models/user.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { Calendar, Loader2Icon } from "lucide-react";
@@ -18,7 +18,7 @@ import { useRef } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 interface ProfileProps {
-    user: User & {
+    user: TUser & {
         _id: string;
     };
 }

@@ -37,10 +37,10 @@ const groupSchema = new mongoose.Schema(
     }
 );
 
-export type Group = InferSchemaType<typeof groupSchema>;
+export type TGroup = InferSchemaType<typeof groupSchema>;
 
 const Group =
-    (mongoose.models.Group as mongoose.Model<Group>) ||
-    mongoose.model<Group>("Group", groupSchema);
+    (mongoose.models.Group as mongoose.Model<TGroup>) ||
+    mongoose.model<TGroup>("Group", groupSchema);
 
 export default Group;

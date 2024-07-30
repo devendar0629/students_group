@@ -21,10 +21,10 @@ const messageSchema = new mongoose.Schema(
     }
 );
 
-export type Message = InferSchemaType<typeof messageSchema>;
+export type TMessage = InferSchemaType<typeof messageSchema>;
 
 const Message =
-    (mongoose.models.Message as mongoose.Model<Message>) ||
-    mongoose.model<Message>("Message", messageSchema);
+    (mongoose.models.Message as mongoose.Model<TMessage>) ||
+    mongoose.model<TMessage>("Message", messageSchema);
 
 export default Message;

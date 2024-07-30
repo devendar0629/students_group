@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { type User } from "@/models/user.model";
+import { type TUser } from "@/models/user.model";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface Account_detailsProps {
-    user: User & {
+    user: TUser & {
         _id: string;
     };
 }
