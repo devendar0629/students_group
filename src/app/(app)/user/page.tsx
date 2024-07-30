@@ -2,11 +2,14 @@ import { poppins } from "@/app/ui/fonts";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import Profile from "./profile";
+import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import axios from "@/lib/config/axios.config";
 import Account_details from "./account_details";
 import Settings from "./settings";
+import { authenticateToken } from "@/utils/AuthenticateToken";
+import { redirect } from "next/navigation";
 
 interface PageProps {
     params?: { [index: string]: string };
@@ -15,14 +18,18 @@ interface PageProps {
 
 const Page: React.FC<PageProps> = async function (request) {
     const currentTab = request.searchParams?.["tab"];
+    const userToken = cookies().get("next-auth.session-token")?.value;
+    const isAuthenticated = await authenticateToken(userToken);
+
+    if (!isAuthenticated) return redirect("/signin");
+
     const currentSession = await getServerSession(authOptions);
 
     const response = await axios.get(
         `${process.env.BASE_URL}/api/v1/users/${currentSession?.user._id}`,
         {
             headers: {
-                Authorization:
-                    "Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..MEgn6nVAjtpaSncx.vUGSMtnmgggu4fvEJMSL9PfiGdgaOJ2i9eCF_Fh3y6ZqR5GgeHfdTCHM2MBEJF5ptg0nDm-dMgkUseUskeqdAk7_bbMsk39EoifPh3bI7hAgIBAHjSJRaHVkB2XKdW_fLdvwDfRPPZNu0RXnacuNdz4j_gz5Maau9RMndSTC05SJL7rvSrICQLiYw7f_1zemS2l4NGtPBjSrULeq-s8Ccy-99N1vFe0CyN21ZQPGuxBd.Cn4J9q-Svr8jutS3Cj6h5g",
+                Authorization: `Bearer ${userToken}`,
             },
         }
     );
