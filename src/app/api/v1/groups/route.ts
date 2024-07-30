@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db.config";
 import { createGroupSchema } from "@/lib/validationSchemas/create-group";
 import Group from "@/models/group.model";
+import User from "@/models/user.model";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
@@ -31,6 +32,7 @@ export async function POST(
         }
 
         if (validatedData.members) {
+            // add the requesting user themself to the created group
             validatedData.members.push(token!._id.toString());
         }
 
@@ -40,6 +42,18 @@ export async function POST(
             admin: token?._id,
             createdBy: token?._id,
             members: validatedData.members,
+        });
+
+        const memberObjects = await User.find({
+            _id: {
+                $in: validatedData.members,
+            },
+        });
+
+        memberObjects.map(async (member) => {
+            member.joinedGroups.push(newGroup._id);
+
+            await member.save();
         });
 
         return NextResponse.json(
