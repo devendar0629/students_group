@@ -12,6 +12,7 @@
     "dependencies": {
         "@hookform/resolvers": "^3.9.0",
         "@radix-ui/react-alert-dialog": "^1.1.1",
+        "@radix-ui/react-dialog": "^1.1.1",
         "@radix-ui/react-dropdown-menu": "^2.1.1",
         "@radix-ui/react-select": "^2.1.1",
         "@radix-ui/react-separator": "^1.1.0",
@@ -33,6 +34,7 @@
         "react-dom": "^18",
         "react-email": "^2.1.5",
         "react-hook-form": "^7.52.1",
+        "react-virtuoso": "^4.9.0",
         "resend": "^3.4.0",
         "tailwind-merge": "^2.3.0",
         "tailwindcss-animate": "^1.0.7",
