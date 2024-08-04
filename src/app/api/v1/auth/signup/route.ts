@@ -8,6 +8,7 @@ import VerificationEmail from "@/../emails/VerificationEmail";
 import { randomInt as cryptoRandomInt } from "node:crypto";
 import Token from "@/models/token.model";
 import { connectDB } from "@/lib/db.config";
+import UserPreferences from "@/models/user_preferences.model";
 
 export async function POST(
     request: NextRequest
@@ -64,7 +65,12 @@ export async function POST(
             verificationCodeExpiry: new Date(Date.now() + 300000), // 5 minutes
         });
 
+        const userPreferencesInstance = await UserPreferences.create({
+            user: newUser._id,
+        });
+
         await newUser.save();
+        await userPreferencesInstance.save();
 
         const mailResponse = await resend.emails.send({
             from: "onboarding@resend.dev",
@@ -91,6 +97,7 @@ export async function POST(
             { status: 201 }
         );
     } catch (error) {
+        console.log(error);
         if (error instanceof ZodError) {
             return NextResponse.json(
                 {
