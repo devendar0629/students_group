@@ -25,8 +25,19 @@ const Page: React.FC<PageProps> = async function (request) {
 
     const currentSession = await getServerSession(authOptions);
 
-    const response = await axios.get(
+    let userResponse, userPreferencesResponse;
+
+    userResponse = await axios.get(
         `${process.env.BASE_URL}/api/v1/users/${currentSession?.user._id}`,
+        {
+            headers: {
+                Authorization: `Bearer ${userToken}`,
+            },
+        }
+    );
+
+    userPreferencesResponse = await axios.get(
+        `${process.env.BASE_URL}/api/v1/preferences`,
         {
             headers: {
                 Authorization: `Bearer ${userToken}`,
@@ -71,17 +82,21 @@ const Page: React.FC<PageProps> = async function (request) {
                 <section className="flex flex-col text-lg pt-10 pl-20">
                     {currentTab === undefined && (
                         <>
-                            <Profile user={response.data?.data} />
+                            <Profile user={userResponse?.data?.data} />
                         </>
                     )}
                     {currentTab === "settings" && (
                         <>
-                            <Settings />
+                            <Settings
+                                userPreferences={
+                                    userPreferencesResponse.data?.data
+                                }
+                            />
                         </>
                     )}
                     {currentTab === "account-details" && (
                         <>
-                            <Account_details user={response.data?.data} />
+                            <Account_details user={userResponse.data?.data} />
                         </>
                     )}
                 </section>

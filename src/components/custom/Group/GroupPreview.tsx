@@ -5,7 +5,6 @@ interface GroupPreviewProps {
 }
 
 const GroupPreview: React.FC<GroupPreviewProps> = function ({ group }) {
-    console.log(group);
     if (!group) {
         return <>Empty</>;
     }

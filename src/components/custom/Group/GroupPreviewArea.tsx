@@ -5,6 +5,7 @@ import { type TGroup } from "@/models/group.model";
 import GroupPreview from "./GroupPreview";
 import { nunito } from "@/app/ui/fonts";
 import { useRouter } from "next/navigation";
+import { Loader2Icon } from "lucide-react";
 
 interface GroupsPreviewProps {
     groups: TGroup[] | null | undefined;
@@ -12,7 +13,13 @@ interface GroupsPreviewProps {
 
 const GroupsPreview: React.FC<GroupsPreviewProps> = function ({ groups }) {
     if (!groups) {
-        return <p>Loading ...</p>; // TODO: Create a skeleton screen
+        return (
+            <section className="w-full h-full flex justify-center items-center">
+                <p className="text-lg font-semibold flex justify-center items-center gap-2">
+                    <Loader2Icon className="animate-spin" /> Loading
+                </p>
+            </section>
+        );
     }
 
     if (groups.length === 0) {

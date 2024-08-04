@@ -69,6 +69,7 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
                         "Something went wrong while updating details",
                     variant: "destructive",
                 });
+                return;
             }
 
             toast({
