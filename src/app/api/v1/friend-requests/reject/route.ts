@@ -1,17 +1,15 @@
-import { connectDB } from "@/lib/db.config";
 import FriendRequest from "@/models/friend_request.model";
 import User from "@/models/user.model";
 import { getIdFromRequest } from "@/utils/getIdFromRequest";
 import { isValidObjectId } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
+// endpoint for rejecting friend requests
 export async function POST(
     request: NextRequest
 ): Promise<NextResponse<ApiResponse>> {
-    await connectDB();
     try {
         const reqData = await request.json();
-
         const friendRequestId = reqData.friendRequestId;
 
         if (!isValidObjectId(friendRequestId)) {
@@ -41,29 +39,13 @@ export async function POST(
         const friendRequestObject = await FriendRequest.findById(
             friendRequestId
         );
-        console.log(friendRequestObject);
+
         const currentUserId = await getIdFromRequest(request);
-        const currentUserObject = await User.findById(currentUserId).select(
-            "-password"
+        const currentUserObject = await User.findById(currentUserId);
+
+        const otherUserObject = await User.findById(
+            friendRequestObject?.receiver
         );
-
-        // The user can only accept friend requests where he is the receiver
-        if (friendRequestObject?.receiver?.toString() !== currentUserId) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        message: "Cannot perform action",
-                        cause: "Permission denied",
-                    },
-                },
-                { status: 403 }
-            );
-        }
-
-        let otherUserObject = await User.findById(
-            friendRequestObject?.sender
-        ).select("-password");
 
         if (!otherUserObject) {
             return NextResponse.json(
@@ -89,9 +71,6 @@ export async function POST(
             1
         );
 
-        currentUserObject?.friends.push(otherUserObject._id);
-        otherUserObject.friends.push(currentUserObject!._id);
-
         await friendRequestObject?.deleteOne();
 
         await currentUserObject!.save();
@@ -100,18 +79,17 @@ export async function POST(
         return NextResponse.json(
             {
                 success: true,
-                message: "Friend request accepted successfully",
+                message: "Friend request rejected successfully",
             },
-            { status: 201 }
+            { status: 200 }
         );
     } catch (error) {
-        console.log(error);
         return NextResponse.json(
             {
                 success: false,
                 error: {
                     message:
-                        "Something went wrong while accepting the friend request",
+                        "Something went wrong while rejecting the friend request",
                 },
             },
             { status: 500 }
