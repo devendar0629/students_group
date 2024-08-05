@@ -24,15 +24,10 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = function ({ user }) {
-    if (!user) {
-        return (
-            <>
-                <p>Something went wrong, try again.</p>
-            </>
-        );
-    }
-
     const formRef = useRef<HTMLFormElement>(null);
+
+    const { toast } = useToast();
+    const router = useRouter();
 
     const {
         register,
@@ -48,8 +43,13 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
         },
     });
 
-    const { toast } = useToast();
-    const router = useRouter();
+    if (!user) {
+        return (
+            <>
+                <p>Something went wrong, try again.</p>
+            </>
+        );
+    }
 
     const handleFormSubmit: SubmitHandler<UpdateProfileSchema> = async (
         data

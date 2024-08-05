@@ -4,11 +4,10 @@ import { Separator } from "@/components/ui/separator";
 import { type TGroup } from "@/models/group.model";
 import GroupPreview from "./GroupPreview";
 import { nunito } from "@/app/ui/fonts";
-import { useRouter } from "next/navigation";
 import { Loader2Icon } from "lucide-react";
 
 interface GroupsPreviewProps {
-    groups: TGroup[] | null | undefined;
+    groups: (TGroup & { _id: string })[] | null | undefined;
 }
 
 const GroupsPreview: React.FC<GroupsPreviewProps> = function ({ groups }) {
@@ -26,8 +25,6 @@ const GroupsPreview: React.FC<GroupsPreviewProps> = function ({ groups }) {
         return <p>No groups created yet</p>;
     }
 
-    const router = useRouter();
-
     return (
         <>
             <section className="h-full w-full rounded-sm bg-gray-900">
@@ -39,7 +36,7 @@ const GroupsPreview: React.FC<GroupsPreviewProps> = function ({ groups }) {
                 <Separator orientation="horizontal" className="mb-3.5" />
 
                 {groups.map((groupObj) => {
-                    return <GroupPreview group={groupObj} />;
+                    return <GroupPreview key={groupObj._id} group={groupObj} />;
                 })}
             </section>
         </>
