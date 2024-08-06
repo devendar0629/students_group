@@ -52,7 +52,7 @@ const Page: React.FC<PageProps> = function () {
                     Friend Requests and Invites
                 </h2>
 
-                <section className="grow text-lg lg:max-w-lg max-w-sm">
+                <section className="grow pl-2.5 text-lg lg:max-w-lg max-w-sm">
                     {isLoading && (
                         <div className="text-lg">
                             <Loader2Icon className="animate-spin inline-block mr-1.5" />{" "}
@@ -89,7 +89,7 @@ const Page: React.FC<PageProps> = function () {
 
                     {!friendRequests && <p>Something went wrong</p>}
                     {!isLoading && friendRequests?.length === 0 && (
-                        <p>No friend requests yet.</p>
+                        <p className="text-[.95rem]">No friend requests yet.</p>
                     )}
                 </section>
             </main>
