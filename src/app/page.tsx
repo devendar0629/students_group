@@ -27,7 +27,9 @@ export default function Home() {
     const [currentSelectedGroup, setCurrentSelectedGroup] =
         useState<TGroup | null>(null);
     const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
-    const [groups, setGroups] = useState<TGroup[] | null>(null);
+    const [groups, setGroups] = useState<(TGroup & { _id: string })[] | null>(
+        null
+    );
 
     const fetchUserGroups = async () => {
         try {
