@@ -31,10 +31,9 @@ export async function POST(
             );
         }
 
-        if (validatedData.members) {
-            // add the requesting user themself to the created group
-            validatedData.members.push(token!._id.toString());
-        }
+        const groupMembers: string[] = validatedData.members || [];
+        // add the requesting user themself to the created group
+        groupMembers.push(token!._id.toString());
 
         const newGroup = await Group.create({
             name: validatedData.name,
@@ -50,6 +49,7 @@ export async function POST(
             },
         });
 
+        // TODO: check here for performance overhead
         memberObjects.map(async (member) => {
             member.joinedGroups.push(newGroup._id);
 

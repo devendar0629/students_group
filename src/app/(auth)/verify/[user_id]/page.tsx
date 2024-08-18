@@ -51,10 +51,10 @@ const Verify: React.FC<PageProps> = function () {
         } catch (error) {
             setIsSubmitting(false);
 
-            if (error instanceof AxiosError && error.response!?.status >= 400) {
+            if (error instanceof AxiosError) {
                 toast({
                     title: "Error",
-                    description: error.response?.data?.error?.message,
+                    description: error.response?.data.error.message,
                     variant: "destructive",
                 });
             } else

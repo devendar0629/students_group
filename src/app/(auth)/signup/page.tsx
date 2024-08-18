@@ -55,7 +55,7 @@ const Signup: React.FC<PageProps> = function () {
                 if (error.status! >= 400) {
                     toast({
                         title: "Error",
-                        description: error.response?.data?.error?.message,
+                        description: error.response?.data.error.message,
                         variant: "destructive",
                     });
                 }

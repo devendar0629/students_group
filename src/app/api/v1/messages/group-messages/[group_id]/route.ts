@@ -150,6 +150,14 @@ export async function GET(
     try {
         const group_id = params.group_id;
 
+        let searchParams = new URL(request.url).searchParams;
+
+        let pageNumber = Number(searchParams.get("page") || 1);
+        let limit = Number(searchParams.get("limit") || 25);
+
+        if (pageNumber < 0) pageNumber = 1;
+        if (limit < 0) limit = 1;
+
         if (!isValidObjectId(group_id)) {
             return NextResponse.json(
                 {
@@ -204,6 +212,33 @@ export async function GET(
                                 path: "$mediaFile",
                                 preserveNullAndEmptyArrays: true,
                             },
+                        },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "sender",
+                                foreignField: "_id",
+                                as: "sender",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            avatar: 1,
+                                            username: 1,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            $unwind: {
+                                path: "$sender",
+                            },
+                        },
+                        {
+                            $skip: (pageNumber - 1) * limit,
+                        },
+                        {
+                            $limit: limit,
                         },
                     ],
                 },

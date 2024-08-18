@@ -30,7 +30,18 @@ export async function GET(
             );
         }
 
-        // to be updated to populate members and messages
+        if (!(await Group.exists({ _id: group_id }))) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Group not found",
+                    },
+                },
+                { status: 404 }
+            );
+        }
+
         const group = await Group.aggregate([
             {
                 $match: {
@@ -46,7 +57,9 @@ export async function GET(
                     pipeline: [
                         {
                             $project: {
-                                password: 0,
+                                name: 1,
+                                username: 1,
+                                avatar: 1,
                             },
                         },
                     ],
@@ -66,7 +79,9 @@ export async function GET(
                     pipeline: [
                         {
                             $project: {
-                                password: 0,
+                                name: 1,
+                                username: 1,
+                                avatar: 1,
                             },
                         },
                     ],
@@ -75,6 +90,28 @@ export async function GET(
             {
                 $unwind: {
                     path: "$createdBy",
+                },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "members",
+                    foreignField: "_id",
+                    as: "members",
+                    pipeline: [
+                        {
+                            $project: {
+                                avatar: 1,
+                                name: 1,
+                                username: 1,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $project: {
+                    messages: 0,
                 },
             },
         ]);
