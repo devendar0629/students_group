@@ -17,15 +17,21 @@ export const createGroupSchema = z
             })
             .optional(),
 
-        members: z
-            .array(
-                z.string({
-                    message: "Members must be an array of strings",
-                })
-            )
-            .optional(),
+        members: z.array(
+            z.string({
+                message: "Members must be an array of strings",
+            })
+        ),
     })
     .refine((parsedValue) => {
         // Check every member is an valid mongoose object id
-        return parsedValue.members?.every((member) => isValidObjectId(member));
+        if (
+            typeof parsedValue.members == typeof [] &&
+            parsedValue.members &&
+            parsedValue.members.length > 0
+        )
+            return parsedValue.members?.every((member) =>
+                isValidObjectId(member)
+            );
+        else return false;
     });

@@ -3,29 +3,19 @@
 import GroupBody from "@/components/custom/Group/GroupBody";
 import GroupPreviewArea from "@/components/custom/Group/GroupPreviewArea";
 import SendFriendRequestPopup from "@/components/custom/Group/SendFriendRequestPopup";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import axios from "@/lib/config/axios.config";
 import { type TGroup } from "@/models/group.model";
-import {
-    ArrowDownSquare,
-    SearchIcon,
-    TimerIcon,
-    User2Icon,
-    UsersRoundIcon,
-} from "lucide-react";
+import { extractGroupNumberFromTag } from "@/utils/extractGroupIdFromTag";
+import { SearchIcon, TimerIcon, User2Icon, UsersRoundIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-    const [currentSelectedGroup, setCurrentSelectedGroup] =
-        useState<TGroup | null>(null);
+    const [currentSelectedGroup, setCurrentSelectedGroup] = useState<
+        HTMLDivElement | undefined
+    >();
     const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
     const [groups, setGroups] = useState<(TGroup & { _id: string })[] | null>(
         null
@@ -98,11 +88,28 @@ export default function Home() {
 
                 <section className="grid grid-cols-[1fr_1px_2.5fr] w-full h-full">
                     <section className="h-full w-full p-2">
-                        <GroupPreviewArea groups={groups} />
+                        <GroupPreviewArea
+                            onSelectedGroupChange={setCurrentSelectedGroup}
+                            groups={groups}
+                        />
                     </section>
                     <Separator orientation="vertical" />
-                    <section className="h-full w-full">
-                        <GroupBody group={undefined} />
+                    <section className="h-full w-full flex flex-nowrap flex-col">
+                        {groups && !!currentSelectedGroup ? (
+                            <GroupBody
+                                groupId={
+                                    groups[
+                                        extractGroupNumberFromTag(
+                                            currentSelectedGroup
+                                        )
+                                    ]._id
+                                }
+                            />
+                        ) : (
+                            <main className="h-[calc(100%-0.875rem)] grid place-content-center rounded-md my-auto w-[calc(100%-0.775rem)] text-lg mx-auto">
+                                <p>No group selected .</p>
+                            </main>
+                        )}
                     </section>
                 </section>
             </main>
