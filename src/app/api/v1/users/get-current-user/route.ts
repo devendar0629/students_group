@@ -24,11 +24,14 @@ export async function GET(
             );
         }
 
-        return NextResponse.json({
-            success: true,
-            message: "Current user fetched successfully",
-            data: user,
-        });
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Current user fetched successfully",
+                data: user,
+            },
+            { status: 200 }
+        );
     } catch (error) {
         return NextResponse.json(
             {

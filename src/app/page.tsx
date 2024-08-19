@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import axios from "@/lib/config/axios.config";
 import { type TGroup } from "@/models/group.model";
+import { TUser } from "@/models/user.model";
 import { extractGroupNumberFromTag } from "@/utils/extractGroupIdFromTag";
 import { SearchIcon, TimerIcon, User2Icon, UsersRoundIcon } from "lucide-react";
 import Link from "next/link";
@@ -16,7 +17,9 @@ export default function Home() {
     const [currentSelectedGroup, setCurrentSelectedGroup] = useState<
         HTMLDivElement | undefined
     >();
-    const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
+    const [currentLoggedInUser, setCurrentLoggedInUser] = useState<
+        TUser & { _id: string }
+    >();
     const [groups, setGroups] = useState<(TGroup & { _id: string })[] | null>(
         null
     );
@@ -34,17 +37,34 @@ export default function Home() {
         }
     };
 
+    const fetchCurrentUser = async () => {
+        try {
+            const response = await axios.get("api/v1/users/get-current-user");
+
+            if (response.status === 200) {
+                return response.data?.data;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            return null;
+        }
+    };
+
     useEffect(() => {
         (async function () {
             const responseObject = await fetchUserGroups();
             setGroups(responseObject);
+
+            const currentUser = await fetchCurrentUser();
+            setCurrentLoggedInUser(currentUser);
         })();
     }, []);
 
     return (
         <>
-            <main className="h-screen w-screen flex flex-col flex-nowrap">
-                <nav className="h-[5rem] w-full bg-slate-700">
+            <main className="h-screen flex flex-col flex-nowrap">
+                <nav className="h-[5rem] bg-slate-700">
                     <ul className="h-full flex flex-row items-center justify-between">
                         <div className="lg:ml-16 ml-2 flex flex-row flex-nowrap gap-5 items-center">
                             <div className="relative">
@@ -93,10 +113,14 @@ export default function Home() {
                             groups={groups}
                         />
                     </section>
+
                     <Separator orientation="vertical" />
-                    <section className="h-full w-full flex flex-nowrap flex-col">
+
+                    <section className="grow max-h-[calc(100vh-5rem)] flex flex-nowrap flex-col">
                         {groups && !!currentSelectedGroup ? (
                             <GroupBody
+                                className=""
+                                currentUserId={currentLoggedInUser?._id!}
                                 groupId={
                                     groups[
                                         extractGroupNumberFromTag(

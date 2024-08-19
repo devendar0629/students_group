@@ -14,6 +14,7 @@ import {
 } from "@/lib/validationSchemas/send-message";
 import { TGroup } from "@/models/group.model";
 import { TMessage } from "@/models/message.model";
+import { formatTimeAgo } from "@/utils/dateformatter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import {
@@ -22,14 +23,21 @@ import {
     SendHorizontalIcon,
     SettingsIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 interface GroupProps {
     groupId: string;
+    currentUserId: string;
+    className?: string;
 }
 
-const GroupBody: React.FC<GroupProps> = function ({ groupId }) {
+const GroupBody: React.FC<GroupProps> = function ({
+    groupId,
+    currentUserId,
+    className,
+}) {
     const [isFetchingMessages, setIsFetchingMessages] =
         useState<boolean>(false);
     const [isFetchingGroupData, setIsFetchingGroupData] =
@@ -159,7 +167,7 @@ const GroupBody: React.FC<GroupProps> = function ({ groupId }) {
     return (
         <>
             <main
-                className={`h-[calc(100%-0.875rem)] flex flex-col flex-nowrap rounded-md my-auto w-[calc(100%-0.775rem)] mx-auto bg-slate-900`}
+                className={`h-[calc(100%-0.875rem)] relative flex flex-col flex-nowrap rounded-md my-auto w-[calc(100%-0.975rem)] mx-auto bg-slate-900 ${className}`}
             >
                 {isFetchingGroupData || isFetchingMessages ? (
                     <p className="flex flex-row flex-nowrap gap-2 text-center my-auto w-full justify-center">
@@ -168,7 +176,7 @@ const GroupBody: React.FC<GroupProps> = function ({ groupId }) {
                     </p>
                 ) : (
                     <>
-                        <nav className="w-full h-16 bg-gray-600 rounded-t-md">
+                        <nav className="h-16 bg-gray-600 py-1.5 rounded-t-md">
                             <ul className="flex flex-row list-none flex-nowrap justify-between px-2 py-1 rounded-t-md h-full items-center">
                                 <li className="flex flex-col flex-nowrap justify-center font-semibold ml-3.5 pb-0.5">
                                     <p className="text-[1.25rem] ml-px font-semibold">
@@ -201,9 +209,77 @@ const GroupBody: React.FC<GroupProps> = function ({ groupId }) {
                             </ul>
                         </nav>
 
-                        <section className="bg-slate-900 grow"></section>
+                        <section className="bg-slate-900 px-2 grow py-1.5 overflow-y-auto">
+                            {groupMessagesResponse?.messages.map(
+                                (message: any) => {
+                                    const isMessageSentByCurrentUser =
+                                        currentUserId ===
+                                        String(message.sender?._id);
 
-                        <section className="h-[4.5rem] flex flex-row flex-nowrap items-center w-full bg-gray-600 rounded-b-md">
+                                    return (
+                                        <>
+                                            <div
+                                                className={`chat ${
+                                                    isMessageSentByCurrentUser
+                                                        ? "chat-end"
+                                                        : "chat-start"
+                                                }`}
+                                            >
+                                                {/* Sender avatar */}
+                                                <div className="chat-image avatar">
+                                                    <div className="w-10 rounded-full">
+                                                        <Image
+                                                            width={40}
+                                                            height={40}
+                                                            alt="message sender avatar image"
+                                                            src={
+                                                                message.sender
+                                                                    ?.avatar
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Chat message content */}
+                                                <div
+                                                    className={`chat ${
+                                                        isMessageSentByCurrentUser
+                                                            ? "chat-end"
+                                                            : "chat-start"
+                                                    }`}
+                                                >
+                                                    <div
+                                                        className={`chat-bubble ${
+                                                            isMessageSentByCurrentUser
+                                                                ? "chat-bubble-primary"
+                                                                : "chat-bubble-secondary"
+                                                        }`}
+                                                    >
+                                                        {message.content}
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    className={`chat-footer text-xs text-muted-foreground ${
+                                                        isMessageSentByCurrentUser
+                                                            ? "mr-px"
+                                                            : "ml-px"
+                                                    }`}
+                                                >
+                                                    {formatTimeAgo(
+                                                        new Date(
+                                                            message.createdAt
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                }
+                            )}
+                        </section>
+
+                        <section className="h-[4.5rem] flex flex-row flex-nowrap items-center w-full bg-gray-600 py-2 rounded-b-md bottom-0">
                             <ul className="w-full rounded-b-md">
                                 <form
                                     ref={messageFormRef}
