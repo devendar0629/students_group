@@ -5,8 +5,7 @@ import { type TGroup } from "@/models/group.model";
 import GroupPreview from "./GroupPreview";
 import { nunito } from "@/app/ui/fonts";
 import { Loader2Icon } from "lucide-react";
-
-import NewGroupCreatePopup from "./NewGroupCreatePopup";
+import Link from "next/link";
 
 interface GroupsPreviewProps {
     groups: (TGroup & { _id: string })[] | null | undefined;
@@ -45,7 +44,12 @@ const GroupsPreview: React.FC<GroupsPreviewProps> = function ({
                 >
                     <span className="pl-3.5 font-semibold">Groups</span>
 
-                    <NewGroupCreatePopup />
+                    <Link
+                        href="/groups/new"
+                        className="flex flex-col flex-nowrap items-center justify-center rounded-[50%] h-[2.15rem] w-[2.15rem] text-center mr-2 bg-transparent hover:bg-slate-500 cursor-pointer"
+                    >
+                        +
+                    </Link>
                 </div>
                 <Separator orientation="horizontal" className="mb-3.5" />
 
