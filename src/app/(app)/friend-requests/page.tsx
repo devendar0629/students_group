@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2Icon } from "lucide-react";
 import { TUser } from "@/models/user.model";
 
-interface PageProps {}
+interface PageProps { }
 
 const Page: React.FC<PageProps> = function () {
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -79,7 +79,7 @@ const Page: React.FC<PageProps> = function () {
                                     />
                                     {friendRequests &&
                                         currIndex <
-                                            friendRequests.length - 1 && (
+                                        friendRequests.length - 1 && (
                                             <Separator orientation="horizontal" />
                                         )}
                                 </>

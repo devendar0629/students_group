@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-interface PageProps {}
+interface PageProps { }
 
 const Signup: React.FC<PageProps> = function () {
     const {
@@ -44,6 +44,7 @@ const Signup: React.FC<PageProps> = function () {
                 setError("root", {
                     message: response.data.error.message,
                 });
+                return;
             }
 
             toast({
@@ -52,19 +53,16 @@ const Signup: React.FC<PageProps> = function () {
             });
         } catch (error) {
             if (error instanceof AxiosError) {
-                if (error.status! >= 400) {
-                    toast({
-                        title: "Error",
-                        description: error.response?.data.error.message,
-                        variant: "destructive",
-                    });
-                }
-            } else
+                setError("root", {
+                    message: error.response?.data?.error?.message ?? "Something went wrong"
+                })
+            } else {
                 toast({
                     title: "Something went wrong",
                     description: "Try again later",
                     variant: "destructive",
                 });
+            }
         }
     };
 
