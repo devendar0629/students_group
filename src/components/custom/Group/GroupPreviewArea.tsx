@@ -6,7 +6,6 @@ import GroupPreview from "./GroupPreview";
 import { nunito } from "@/app/ui/fonts";
 import { Loader2Icon } from "lucide-react";
 
-import { useEffect, useState } from "react";
 import NewGroupCreatePopup from "./NewGroupCreatePopup";
 
 interface GroupsPreviewProps {

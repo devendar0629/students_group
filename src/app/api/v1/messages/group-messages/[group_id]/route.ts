@@ -200,6 +200,11 @@ export async function GET(
                     as: "messages",
                     pipeline: [
                         {
+                            $sort: {
+                                createdAt: -1
+                            }
+                        },
+                        {
                             $lookup: {
                                 from: "media",
                                 localField: "mediaFile",
@@ -250,6 +255,8 @@ export async function GET(
             },
         ]);
 
+        group_messages[0]?.messages?.reverse();
+
         return NextResponse.json(
             {
                 success: true,
@@ -271,3 +278,5 @@ export async function GET(
         );
     }
 }
+
+export const dynamic = 'force-dynamic'

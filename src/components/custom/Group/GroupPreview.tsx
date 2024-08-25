@@ -5,11 +5,13 @@ import { convertFileNameToNormal } from "@/utils/convertFileName";
 interface GroupPreviewProps {
     group: any;
     className?: string;
+    key: string;
 }
 
 const GroupPreview: React.FC<GroupPreviewProps> = function ({
     group,
     className,
+    key
 }) {
     if (!group) {
         return <>Empty</>;
@@ -20,6 +22,7 @@ const GroupPreview: React.FC<GroupPreviewProps> = function ({
         return (
             <>
                 <div
+                    key={key}
                     className={`w-full h-16 bg-gray-700 flex flex-col flex-nowrap justify-center pl-3 gap-0.5 ${className}`}
                 >
                     <p className="font-semibold pl-px whitespace-nowrap lg:w-[25rem] md:w-[16.5rem] sm:w-[14rem] w-[10rem]">
@@ -36,6 +39,7 @@ const GroupPreview: React.FC<GroupPreviewProps> = function ({
     return (
         <>
             <div
+                key={key}
                 className={`w-full h-16 bg-gray-700 flex flex-col flex-nowrap justify-center pl-3 gap-0.5 ${className}`}
             >
                 <p className="font-semibold pl-px">{group.name}</p>

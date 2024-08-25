@@ -26,6 +26,7 @@ import {
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import InfiniteScroll from "react-infinite-scroll-component"
 
 interface GroupProps {
     groupId: string;
@@ -42,6 +43,8 @@ const GroupBody: React.FC<GroupProps> = function ({
         useState<boolean>(false);
     const [isFetchingGroupData, setIsFetchingGroupData] =
         useState<boolean>(false);
+    const [page, setPage] = useState(1);
+    const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(true);
 
     const {
         register,
@@ -51,33 +54,49 @@ const GroupBody: React.FC<GroupProps> = function ({
         resolver: zodResolver(sendMessageInGroupSchemaClient),
     });
 
-    const [groupMessagesResponse, setGroupMessagesResponse] = useState<
-        | {
-              _id: string;
-              messages: (TMessage & { _id: string })[];
-          }
-        | undefined
-    >();
+    const [groupMessages, setGroupMessages] = useState<
+        any[]
+    >([]);
     const [groupData, setGroupData] = useState<TGroup | undefined>();
 
-    const fetchGroupMessages = async () => {
+    const fetchAndSetGroupMessages = async () => {
+        if (isFetchingMessages) return;
+
         try {
             const response = await axios.get(
-                `/api/v1/messages/group-messages/${groupId}`
+                `/api/v1/messages/group-messages/${groupId}?page=${page}&limit=25`
             );
 
             if (response.status === 200) {
-                return response.data.data;
-            } else return undefined;
+                if (response.data.data?.messages.length === 0) {
+                    setPage(() => 1); // reset the page to start
+                    setHasMoreMessages(false);
+                } else {
+                    const responseMessages = response.data.data?.messages;
+                    setGroupMessages((prevMessages) => [...responseMessages, ...prevMessages]);
+                    setPage(page + 1);
+                }
+            } else {
+                toast({
+                    title: "Error",
+                    description: "Something went wrong",
+                    variant: "destructive"
+                })
+            }
         } catch (error) {
-            return undefined;
+            toast({
+                title: "Error",
+                description: "Something went wrong",
+                variant: "destructive"
+            })
         }
     };
     const fetchGroupData = async () => {
         try {
             const response = await axios.get(`/api/v1/groups/${groupId}`);
-            if (response.status === 200) return response.data.data;
-            else return undefined;
+            if (response.status === 200) {
+                return response.data.data;
+            } return undefined;
         } catch (error) {
             return undefined;
         }
@@ -85,21 +104,37 @@ const GroupBody: React.FC<GroupProps> = function ({
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messageFormRef = useRef<HTMLFormElement>(null);
+    const messageContainerRef = useRef<HTMLElement>(null)
 
     useEffect(() => {
         (async function () {
+            // fetches the group data
             setIsFetchingGroupData(true);
             const groupData = await fetchGroupData();
             setIsFetchingGroupData(false);
 
+            // fetches and sets the group messages
             setIsFetchingMessages(true);
-            const groupMessages = await fetchGroupMessages();
+            await fetchAndSetGroupMessages();
             setIsFetchingMessages(false);
 
-            setGroupMessagesResponse(groupMessages);
             setGroupData(groupData);
         })();
+
+        return () => {
+            setPage(() => 1);
+            setGroupData(() => undefined);
+            setHasMoreMessages(() => true);
+            setGroupMessages(() => []);
+        };
     }, [groupId]);
+
+    // Scroll to the bottom of messages every time the group messages change
+    useEffect(() => {
+        if (messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current?.scrollHeight;
+        }
+    }, [groupMessages])
 
     const { toast } = useToast();
 
@@ -209,74 +244,84 @@ const GroupBody: React.FC<GroupProps> = function ({
                             </ul>
                         </nav>
 
-                        <section className="bg-slate-900 px-2 grow py-1.5 overflow-y-auto">
-                            {groupMessagesResponse?.messages.map(
-                                (message: any) => {
-                                    const isMessageSentByCurrentUser =
-                                        currentUserId ===
-                                        String(message.sender?._id);
+                        <section ref={messageContainerRef} id="messagesContainer" className="bg-slate-900 grow px-2 py-1.5 flex flex-col-reverse overflow-y-auto">
 
-                                    return (
-                                        <>
-                                            <div
-                                                className={`chat ${
-                                                    isMessageSentByCurrentUser
+                            <InfiniteScroll
+                                scrollThreshold={0.95}
+                                dataLength={groupMessages.length}
+                                next={fetchAndSetGroupMessages}
+                                hasMore={hasMoreMessages}
+                                inverse={true}
+                                loader={<h4 className="bg-transparent text-center">Loading messages ...</h4>}
+                                scrollableTarget="messagesContainer"
+                            >
+                                {groupMessages?.map(
+                                    (message: any) => {
+                                        const isMessageSentByCurrentUser =
+                                            currentUserId ===
+                                            String(message.sender?._id);
+
+                                        return (
+                                            <>
+                                                <div
+                                                    key={message._id}
+                                                    className={`chat ${isMessageSentByCurrentUser
                                                         ? "chat-end"
                                                         : "chat-start"
-                                                }`}
-                                            >
-                                                {/* Sender avatar */}
-                                                <div className="chat-image avatar">
-                                                    <div className="w-10 rounded-full">
-                                                        <Image
-                                                            width={40}
-                                                            height={40}
-                                                            alt="message sender avatar image"
-                                                            src={
-                                                                message.sender
-                                                                    ?.avatar
-                                                            }
-                                                        />
+                                                        }`}
+                                                >
+                                                    {/* Sender avatar */}
+                                                    <div className="chat-image avatar">
+                                                        <div className="w-10 rounded-full">
+                                                            <Image
+                                                                width={40}
+                                                                height={40}
+                                                                alt="message sender avatar image"
+                                                                src={
+                                                                    message.sender
+                                                                        ?.avatar
+                                                                }
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                {/* Chat message content */}
-                                                <div
-                                                    className={`chat ${
-                                                        isMessageSentByCurrentUser
+                                                    {/* Chat message content */}
+                                                    <div
+                                                        className={`chat ${isMessageSentByCurrentUser
                                                             ? "chat-end"
                                                             : "chat-start"
-                                                    }`}
-                                                >
-                                                    <div
-                                                        className={`chat-bubble ${
-                                                            isMessageSentByCurrentUser
+                                                            }`}
+                                                    >
+                                                        <div
+                                                            className={`chat-bubble ${isMessageSentByCurrentUser
                                                                 ? "chat-bubble-primary"
                                                                 : "chat-bubble-secondary"
-                                                        }`}
-                                                    >
-                                                        {message.content}
+                                                                }`}
+                                                        >
+                                                            {message.content}
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div
-                                                    className={`chat-footer text-xs text-muted-foreground ${
-                                                        isMessageSentByCurrentUser
+                                                    <div
+                                                        className={`chat-footer text-xs text-muted-foreground ${isMessageSentByCurrentUser
                                                             ? "mr-px"
                                                             : "ml-px"
-                                                    }`}
-                                                >
-                                                    {formatTimeAgo(
-                                                        new Date(
-                                                            message.createdAt
-                                                        )
-                                                    )}
+                                                            }`}
+                                                    >
+                                                        {formatTimeAgo(
+                                                            new Date(
+                                                                message.createdAt
+                                                            )
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </>
-                                    );
-                                }
-                            )}
+                                            </>
+                                        );
+                                    }
+                                )}
+                            </InfiniteScroll>
+
+                            {!hasMoreMessages && <p className="text-muted-foreground text-sm text-center">-- Reached the end --</p>}
                         </section>
 
                         <section className="h-[4.5rem] flex flex-row flex-nowrap items-center w-full bg-gray-600 py-2 rounded-b-md bottom-0">
@@ -308,11 +353,10 @@ const GroupBody: React.FC<GroupProps> = function ({
                                         {...register("content")}
                                         placeholder="Type a message ..."
                                         type="text"
-                                        className={`grow pl-5 h-12 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus:ring- outline-none ${
-                                            errors.content
-                                                ? "ring-2 ring-offset-0 ring-red-500"
-                                                : ""
-                                        }`}
+                                        className={`grow pl-5 h-12 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus:ring- outline-none ${errors.content
+                                            ? "ring-2 ring-offset-0 ring-red-500"
+                                            : ""
+                                            }`}
                                     />
 
                                     <button
