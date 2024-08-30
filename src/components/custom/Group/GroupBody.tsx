@@ -26,6 +26,7 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
+import GroupDetails from "./GroupDetails";
 
 interface GroupBodyProps {
     groupId: string;
@@ -309,14 +310,16 @@ const GroupBodyNavBar: React.FC<GroupBodyNavBarProps> = ({ groupId }) => {
                     </p>
                 ) : (
                     <ul className="flex flex-row list-none flex-nowrap justify-between px-2 py-1 rounded-t-md h-full items-center">
-                        <li className="flex flex-col flex-nowrap justify-center font-semibold ml-3.5 pb-0.5">
-                            <p className="text-[1.25rem] ml-px font-semibold">
-                                {groupData?.name}
-                            </p>
-                            <span className="text-muted-foreground text-xs">
-                                {groupData?.members.length} members
-                            </span>
-                        </li>
+                        <GroupDetails groupDetails={groupData}>
+                            <li className="flex flex-col flex-nowrap justify-center font-semibold ml-3.5 rounded-md px-2.5 pt-px pb-1.5 hover:bg-gray-500 hover:cursor-pointer">
+                                <p className="text-[1.25rem] ml-px font-semibold">
+                                    {groupData?.name}
+                                </p>
+                                <span className="text-muted-foreground text-xs">
+                                    {groupData?.members.length} members
+                                </span>
+                            </li>
+                        </GroupDetails>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger className="mr-3 hover:bg-slate-400 p-[0.3rem] rounded-[48%]">
