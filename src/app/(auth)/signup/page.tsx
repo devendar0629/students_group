@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-interface PageProps { }
+interface PageProps {}
 
 const Signup: React.FC<PageProps> = function () {
     const {
@@ -30,6 +30,7 @@ const Signup: React.FC<PageProps> = function () {
 
     const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
     const { toast } = useToast();
+    const [isSignUpSuccess, setIsSignUpSuccess] = useState<boolean>(false);
 
     const handleSignup: SubmitHandler<SignupSchema> = async (formData) => {
         try {
@@ -47,6 +48,7 @@ const Signup: React.FC<PageProps> = function () {
                 return;
             }
 
+            setIsSignUpSuccess(true);
             toast({
                 title: "Signed up successfully",
                 className: "bg-green-700 text-slate-100",
@@ -54,8 +56,10 @@ const Signup: React.FC<PageProps> = function () {
         } catch (error) {
             if (error instanceof AxiosError) {
                 setError("root", {
-                    message: error.response?.data?.error?.message ?? "Something went wrong"
-                })
+                    message:
+                        error.response?.data?.error?.message ??
+                        "Something went wrong",
+                });
             } else {
                 toast({
                     title: "Something went wrong",
@@ -155,6 +159,25 @@ const Signup: React.FC<PageProps> = function () {
                                 </p>
                             )}
                         </div>
+
+                        {isSignUpSuccess && (
+                            <div className="flex flex-row gap-2 flex-nowrap items-center mt-1">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height="24px"
+                                    viewBox="0 -960 960 960"
+                                    width="24px"
+                                    fill="#e8eaed"
+                                >
+                                    <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z" />
+                                </svg>
+
+                                <p className="text-green-400 text-sm">
+                                    Follow the steps sent to your email to
+                                    verify your account
+                                </p>
+                            </div>
+                        )}
 
                         <Button
                             className="flex select-none py-[1.4rem] pb-[1.5rem] text-[1.15rem] flex-row mt-4 flex-nowrap justify-center lg:gap-2.5 gap-2 items-center"
