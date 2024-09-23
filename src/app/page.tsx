@@ -41,7 +41,6 @@ export default function Home() {
         });
 
         _socket.on("connect", () => {
-            console.log("Connected to server !");
             setSocket(_socket);
             setConnectionStatus("CONNECTED");
         });
@@ -154,7 +153,9 @@ export default function Home() {
                     <section className="h-full w-full p-2">
                         <GroupPreviewArea
                             isFetching={isFetchingGroups}
-                            onSelectedGroupChange={setCurrentSelectedGroup}
+                            onSelectedGroupChange={(node: HTMLDivElement) =>
+                                setCurrentSelectedGroup(node)
+                            }
                             groups={groups}
                         />
                     </section>

@@ -94,8 +94,6 @@ export async function PATCH(
             "-password"
         );
 
-        console.log(userToRemove);
-
         // remove the group from the user's joined groups list
         userToRemove?.joinedGroups.splice(
             userToRemove.joinedGroups.indexOf(new Types.ObjectId(groupId)),

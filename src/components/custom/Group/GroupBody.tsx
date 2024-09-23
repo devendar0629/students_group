@@ -202,10 +202,6 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
 
     useEffect(() => {
         const serverRoomMessageHandler = (roomId: string, message: any) => {
-            console.log(`sv-msg ${roomId}: `, message);
-
-            console.log(`${currGroupId} === ${roomId}`, currGroupId === roomId);
-
             if (currGroupId === roomId) {
                 addMessage(message);
             }
@@ -219,7 +215,7 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
                 serverRoomMessageHandler
             );
         };
-    }, []);
+    }, [addMessage, currGroupId, socket]);
 
     const { toast } = useToast();
     if (error) {
@@ -406,8 +402,6 @@ const GroupBody: React.FC<GroupBodyProps> = function ({
     className,
     socket,
 }) {
-    console.log("Current group: ", groupId);
-
     return (
         <>
             <main

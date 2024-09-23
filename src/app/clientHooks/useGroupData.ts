@@ -1,6 +1,6 @@
 import axios from "@/lib/config/axios.config";
 import { AxiosError } from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 
 interface MongooseDocument {
@@ -48,56 +48,50 @@ export const useMessages = (groupId: string) => {
     const [error, setError] = useState<string>("");
     const [groupMessages, setGroupMessages] = useState<any[]>([]);
 
-    const fetchMessages = async (pageNumber: number) => {
-        setFetching(true);
+    const fetchMessages = useCallback(
+        async (pageNumber: number) => {
+            setFetching(true);
 
-        try {
-            const response = await axios.get(
-                `/api/v1/messages/group-messages/${groupId}?page=${pageNumber}`
-            );
+            try {
+                const response = await axios.get(
+                    `/api/v1/messages/group-messages/${groupId}?page=${pageNumber}`
+                );
 
-            if (response.status !== 200) {
-                return {
-                    data: null,
-                    error: response.data.error?.message,
-                };
-            } else {
-                return {
-                    error: null,
-                    data: {
-                        groupId: response.data.data?._id,
-                        messages: response.data?.data?.messages,
-                    },
-                };
+                if (response.status !== 200) {
+                    return {
+                        data: null,
+                        error: response.data.error?.message,
+                    };
+                } else {
+                    return {
+                        error: null,
+                        data: {
+                            groupId: response.data.data?._id,
+                            messages: response.data?.data?.messages,
+                        },
+                    };
+                }
+            } catch (error) {
+                if (error instanceof AxiosError) {
+                    return {
+                        data: null,
+                        error:
+                            error.response?.data?.error.message ??
+                            "Something went wrong while fetching group messages",
+                    };
+                } else {
+                    return {
+                        data: null,
+                        error: "Something went wrong while fetching group messages",
+                    };
+                }
+            } finally {
+                setFetching(false);
             }
-        } catch (error) {
-            if (error instanceof AxiosError) {
-                return {
-                    data: null,
-                    error:
-                        error.response?.data?.error.message ??
-                        "Something went wrong while fetching group messages",
-                };
-            } else {
-                return {
-                    data: null,
-                    error: "Something went wrong while fetching group messages",
-                };
-            }
-        } finally {
-            setFetching(false);
-        }
-    };
+        },
+        [groupId]
+    );
 
-    const setInitialMessages = async () => {
-        const response = await fetchMessages(1);
-
-        if (response.error) {
-            setError(response.error);
-        } else {
-            setGroupMessages(response.data?.messages);
-        }
-    };
     const setMoreMessages = async () => {
         if (!hasMoreMessages) {
             return;
@@ -129,10 +123,20 @@ export const useMessages = (groupId: string) => {
         setHasMoreMessages(true);
         setPage(2);
 
+        const setInitialMessages = async () => {
+            const response = await fetchMessages(1);
+
+            if (response.error) {
+                setError(response.error);
+            } else {
+                setGroupMessages(response.data?.messages);
+            }
+        };
+
         (async () => {
             await setInitialMessages();
         })();
-    }, [groupId]);
+    }, [fetchMessages, groupId]);
 
     return {
         page,
@@ -150,29 +154,30 @@ export const useGroupData = (groupId: string) => {
     const [error, setError] = useState<string>("");
     const [groupData, setGroupData] = useState<Group | undefined>(undefined);
 
-    const fetchGroupData = async () => {
-        try {
-            const response = await axios.get(`/api/v1/groups/${groupId}`);
-
-            if (response.status !== 200) {
-                setError(response.data.data?.error?.message);
-                return undefined;
-            } else {
-                return response.data?.data;
-            }
-        } catch (error) {
-            if (error instanceof AxiosError) {
-                setError(
-                    error.response?.data?.error.message ??
-                        "Something went wrong while fetching group data"
-                );
-            } else setError("Something went wrong while fetching group data");
-
-            return undefined;
-        }
-    };
-
     useEffect(() => {
+        const fetchGroupData = async () => {
+            try {
+                const response = await axios.get(`/api/v1/groups/${groupId}`);
+
+                if (response.status !== 200) {
+                    setError(response.data.data?.error?.message);
+                    return undefined;
+                } else {
+                    return response.data?.data;
+                }
+            } catch (error) {
+                if (error instanceof AxiosError) {
+                    setError(
+                        error.response?.data?.error.message ??
+                            "Something went wrong while fetching group data"
+                    );
+                } else
+                    setError("Something went wrong while fetching group data");
+
+                return undefined;
+            }
+        };
+
         (async () => {
             setIsFetching(true);
             const groupData = await fetchGroupData();

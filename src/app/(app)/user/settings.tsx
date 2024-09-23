@@ -76,7 +76,6 @@ const Settings: React.FC<SettingsProps> = function ({ userPreferences }) {
     ) => {
         try {
             const response = await axios.patch("/api/v1/preferences", data);
-            console.log(response);
 
             if (response.status !== 200) {
                 toast({
