@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import axios from "@/lib/config/axios.config";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { AxiosError } from "axios";
-import { ArrowDownIcon } from "lucide-react";
+import { ArrowDownIcon, Loader2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 
 interface Option {
@@ -166,6 +167,7 @@ const Page: React.FC = () => {
     const descriptionRef = useRef<HTMLTextAreaElement>(null);
     const [error, setError] = useState<string>("");
     const [isCreatingGroup, setIsCreatingGroup] = useState<boolean>(false);
+    const router = useRouter();
 
     useEffect(() => {
         (async () => {
@@ -212,9 +214,8 @@ const Page: React.FC = () => {
             return;
         }
 
+        setIsCreatingGroup(true);
         try {
-            setIsCreatingGroup(true);
-
             const response = await axios.post("/api/v1/groups", {
                 name: nameRef.current?.value,
                 description: descriptionRef.current?.value,
@@ -227,6 +228,8 @@ const Page: React.FC = () => {
                         "Something went wrong while creating the group"
                 );
             }
+
+            router.replace("/");
         } catch (error) {
             if (error instanceof AxiosError) {
                 setError(error.response?.data?.error.messaage);
@@ -273,8 +276,14 @@ const Page: React.FC = () => {
                     <p className="text-sm text-red-500 text-center">{error}</p>
                 )}
 
-                <Button className="mt-6" type="submit">
-                    Submit
+                <Button
+                    className="mt-6 flex flex-row flex-nowrap gap-2 items-center"
+                    type="submit"
+                >
+                    {isCreatingGroup && (
+                        <Loader2Icon className="animate-spin size-[1.09rem] mb-[1.5px]" />
+                    )}
+                    Create
                 </Button>
             </form>
         </main>

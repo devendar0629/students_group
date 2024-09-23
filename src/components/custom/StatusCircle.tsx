@@ -15,7 +15,7 @@ const StatusCircle = ({ status, className }: StatusCircleProps) => {
     return (
         <div
             style={{
-                boxShadow: "0 0 5.5px .7px lightgray",
+                boxShadow: "0 0 2px .7px lightgray",
             }}
             className={`rounded-full ${statusColors[status]} ${className}`}
         ></div>

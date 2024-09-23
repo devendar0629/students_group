@@ -1,22 +1,12 @@
 import axios from "@/lib/config/axios.config";
 import { AxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
+import { Socket } from "socket.io-client";
 
 interface MongooseDocument {
     _id: string;
     createdAt: string;
     updatedAt: string;
-}
-
-interface GroupMessage extends MongooseDocument {
-    content: string;
-    mediaFile?: {
-        _id: string;
-        fileName: string;
-        link: string;
-        sender: string; // _id of the sender
-    } & MongooseDocument;
-    sender: string;
 }
 interface Group extends MongooseDocument {
     admin: {
@@ -41,6 +31,16 @@ interface Group extends MongooseDocument {
     }[];
 }
 
+export const useGroups = (socket: Socket | null) => {
+    const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
+
+    socket?.once("joined-groups", (groups) => {
+        setJoinedGroups(groups);
+    });
+
+    return { joinedGroups };
+};
+
 export const useMessages = (groupId: string) => {
     const [page, setPage] = useState<number>(2);
     const [fetching, setFetching] = useState<boolean>(false);
@@ -49,6 +49,8 @@ export const useMessages = (groupId: string) => {
     const [groupMessages, setGroupMessages] = useState<any[]>([]);
 
     const fetchMessages = async (pageNumber: number) => {
+        setFetching(true);
+
         try {
             const response = await axios.get(
                 `/api/v1/messages/group-messages/${groupId}?page=${pageNumber}`
@@ -82,6 +84,8 @@ export const useMessages = (groupId: string) => {
                     error: "Something went wrong while fetching group messages",
                 };
             }
+        } finally {
+            setFetching(false);
         }
     };
 
@@ -117,6 +121,10 @@ export const useMessages = (groupId: string) => {
         }
     };
 
+    const addMessage = (message: any) => {
+        setGroupMessages((prev) => [...prev, message]);
+    };
+
     useEffect(() => {
         setHasMoreMessages(true);
         setPage(2);
@@ -133,6 +141,7 @@ export const useMessages = (groupId: string) => {
         hasMoreMessages,
         setMoreMessages,
         error,
+        addMessage,
     };
 };
 

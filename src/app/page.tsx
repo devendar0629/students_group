@@ -3,6 +3,7 @@
 import GroupBody from "@/components/custom/Group/GroupBody";
 import GroupPreviewArea from "@/components/custom/Group/GroupPreviewArea";
 import SendFriendRequestPopup from "@/components/custom/Group/SendFriendRequestPopup";
+import StatusCircle from "@/components/custom/StatusCircle";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import axios from "@/lib/config/axios.config";
@@ -12,6 +13,8 @@ import { extractGroupNumberFromTag } from "@/utils/extractGroupIdFromTag";
 import { SearchIcon, TimerIcon, User2Icon, UsersRoundIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { io, type Socket } from "socket.io-client";
+import { useGroups } from "./clientHooks/useGroupData";
 
 export default function Home() {
     const [currentSelectedGroup, setCurrentSelectedGroup] = useState<
@@ -23,8 +26,37 @@ export default function Home() {
     const [groups, setGroups] = useState<(TGroup & { _id: string })[] | null>(
         null
     );
+    const [socket, setSocket] = useState<Socket | null>(null);
+    const [connectionStatus, setConnectionStatus] = useState<
+        "CONNECTED" | "DISCONNECTED"
+    >("DISCONNECTED");
+    const [isFetchingGroups, setIsFetchingGroups] = useState<boolean>(false);
+
+    const { joinedGroups } = useGroups(socket);
+
+    useEffect(() => {
+        const _socket = io(process.env.NEXT_PUBLIC_SOCKET_SERVER_URL!, {
+            withCredentials: true,
+            reconnectionAttempts: 3,
+        });
+
+        _socket.on("connect", () => {
+            console.log("Connected to server !");
+            setSocket(_socket);
+            setConnectionStatus("CONNECTED");
+        });
+
+        _socket.on("disconnect", () => {
+            setConnectionStatus("DISCONNECTED");
+        });
+
+        return () => {
+            _socket.close();
+        };
+    }, []);
 
     const fetchUserGroups = async () => {
+        setIsFetchingGroups(true);
         try {
             const response = await axios.get("/api/v1/users/groups");
             if (response.status !== 200) {
@@ -34,6 +66,8 @@ export default function Home() {
             return response.data.data.joinedGroups;
         } catch (error) {
             return null;
+        } finally {
+            setIsFetchingGroups(false);
         }
     };
 
@@ -86,6 +120,16 @@ export default function Home() {
                             </Link>
                         </div>
 
+                        <section className="flex flex-row gap-2 flex-nowrap text-nowrap items-center">
+                            <p className="text-sm opacity-70">
+                                Connection status:
+                            </p>
+                            <StatusCircle
+                                status={connectionStatus}
+                                className={"size-3 mb-px"}
+                            />
+                        </section>
+
                         <div className="flex flex-row flex-nowrap gap-6 items-center">
                             <Link
                                 className="rounded-[50%] relative bg-transparent p-2.5 hover:bg-slate-500 text-2xl"
@@ -109,6 +153,7 @@ export default function Home() {
                 <section className="grid grid-cols-[1fr_1px_2.5fr] w-full h-full">
                     <section className="h-full w-full p-2">
                         <GroupPreviewArea
+                            isFetching={isFetchingGroups}
                             onSelectedGroupChange={setCurrentSelectedGroup}
                             groups={groups}
                         />
@@ -119,7 +164,7 @@ export default function Home() {
                     <section className="grow max-h-[calc(100vh-5rem)] flex flex-nowrap flex-col">
                         {groups && !!currentSelectedGroup ? (
                             <GroupBody
-                                className=""
+                                socket={socket}
                                 currentUserId={currentLoggedInUser?._id!}
                                 groupId={
                                     groups[

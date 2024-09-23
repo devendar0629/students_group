@@ -23,36 +23,44 @@ import {
     SettingsIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import GroupDetails from "./GroupDetails";
+import { Socket } from "socket.io-client";
+import maleAvatarPlaceholder from "@/../public/male-avatar-placeholder.jpg";
 
 interface GroupBodyProps {
     groupId: string;
     currentUserId: string;
     className?: string;
+    socket: Socket | null;
 }
 interface SendMessageFormProps {
     groupId: string;
     onMessageCreation?: (message: any) => void;
+    socket: Socket | null;
 }
 interface GroupBodyNavBarProps {
     groupId: string;
 }
 interface GroupBodyMessagesContainerProps {
-    groupId: string;
+    currGroupId: string;
     currentUserId: string;
+    socket: Socket | null;
 }
 
 const SendMessageForm: React.FC<SendMessageFormProps> = ({
     groupId,
     onMessageCreation,
+    socket,
 }) => {
+    const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false);
+
     const {
         register,
         handleSubmit,
-        formState: { isSubmitting, errors },
+        formState: { errors },
     } = useForm<SendMessageInGroupSchemaClient>({
         resolver: zodResolver(sendMessageInGroupSchemaClient),
     });
@@ -62,67 +70,76 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
 
     const { toast } = useToast();
 
-    const handleMessageCreation: SubmitHandler<
+    const handleMessageEmission: SubmitHandler<
         SendMessageInGroupSchemaClient
     > = async (data) => {
+        if (!socket) return;
+
+        setIsSendingMessage(true);
+
         try {
-            const formData = new FormData(messageFormRef.current!);
-            const mediaFileInput = formData.get("mediaFile") as File;
+            const file = fileInputRef.current?.files?.[0];
 
-            // validate the media file separately
-            const validatedMediaFile = mediaFileSchemaClient.safeParse({
-                mediaFile: formData.get("mediaFile"),
-            });
+            if (file) {
+                file.arrayBuffer().then((buffer) => {
+                    socket.timeout(60000).emit(
+                        "client-room-message",
+                        {
+                            roomName: groupId,
+                            content: data.content,
+                            mediaFile: {
+                                buffer,
+                                mimeType: file.type,
+                                fileNameWithoutExtension: file.name.slice(
+                                    0,
+                                    file.name.lastIndexOf(".")
+                                ),
+                            },
+                        },
+                        (error: Error | null, data: any | null) => {
+                            if (error) {
+                                toast({
+                                    title: "Error",
+                                    description:
+                                        "Something went wrong while sending message",
+                                    variant: "destructive",
+                                });
+                            }
 
-            if (!validatedMediaFile.success) {
-                toast({
-                    title: "Error",
-                    description: "Invalid media file",
-                    variant: "destructive",
-                });
-            }
-
-            if (
-                !mediaFileInput ||
-                mediaFileInput.size === 0 ||
-                mediaFileInput.name === ""
-            ) {
-                formData.delete("mediaFile");
-            }
-
-            const response = await axios.post(
-                `/api/v1/messages/group-messages/${groupId}`,
-                formData
-            );
-
-            if (response.status !== 201) {
-                toast({
-                    title: response.data?.error.cause ?? "Error",
-                    description:
-                        response.data?.error.message ?? "Something went wrong",
+                            setIsSendingMessage(false);
+                        }
+                    );
                 });
             } else {
-                if (typeof onMessageCreation === "function") {
-                    onMessageCreation(response.data?.data);
-                }
-                messageFormRef.current?.reset();
+                socket.emit(
+                    "client-room-message",
+                    {
+                        roomName: groupId,
+                        content: data.content,
+                        mediaFile: null,
+                    },
+                    (error: Error | null, data: any | null) => {
+                        if (error) {
+                            toast({
+                                title: "Error",
+                                description:
+                                    "Something went wrong while sending message",
+                                variant: "destructive",
+                            });
+                        }
+
+                        setIsSendingMessage(false);
+                    }
+                );
             }
         } catch (error) {
-            if (error instanceof AxiosError) {
-                toast({
-                    title: error.response?.data?.error?.cause ?? "Error",
-                    description:
-                        error.response?.data?.error?.message ??
-                        "Something went wrong",
-                    variant: "destructive",
-                });
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Something went wrong",
-                    variant: "destructive",
-                });
-            }
+            toast({
+                title: "Error",
+                description: "Something went wrong while sending the message",
+                variant: "destructive",
+            });
+
+            setIsSendingMessage(false);
         }
     };
 
@@ -130,7 +147,7 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
         <>
             <form
                 ref={messageFormRef}
-                onSubmit={handleSubmit(handleMessageCreation)}
+                onSubmit={handleSubmit(handleMessageEmission)}
                 className="w-full flex flex-row gap-3.5 items-center flex-nowrap"
             >
                 <div
@@ -159,7 +176,7 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
                 />
 
                 <button
-                    disabled={isSubmitting}
+                    disabled={isSendingMessage}
                     type="submit"
                     className={`rounded-md p-1 mr-2.5 h-12 w-[3.125rem] hover:bg-gray-500 disabled:opacity-65 disabled:cursor-not-allowed`}
                 >
@@ -171,11 +188,38 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
 };
 
 const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
-    groupId,
+    currGroupId,
     currentUserId,
+    socket,
 }) => {
-    const { error, groupMessages, hasMoreMessages, setMoreMessages } =
-        useMessages(groupId);
+    const {
+        error,
+        groupMessages,
+        hasMoreMessages,
+        setMoreMessages,
+        addMessage,
+    } = useMessages(currGroupId);
+
+    useEffect(() => {
+        const serverRoomMessageHandler = (roomId: string, message: any) => {
+            console.log(`sv-msg ${roomId}: `, message);
+
+            console.log(`${currGroupId} === ${roomId}`, currGroupId === roomId);
+
+            if (currGroupId === roomId) {
+                addMessage(message);
+            }
+        };
+
+        socket?.on("server-room-message", serverRoomMessageHandler);
+
+        return () => {
+            socket?.removeListener(
+                "server-room-message",
+                serverRoomMessageHandler
+            );
+        };
+    }, []);
 
     const { toast } = useToast();
     if (error) {
@@ -237,7 +281,10 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
                                                 width={40}
                                                 height={40}
                                                 alt="message sender avatar image"
-                                                src={message.sender?.avatar}
+                                                src={
+                                                    message.sender?.avatar ||
+                                                    maleAvatarPlaceholder.src
+                                                }
                                             />
                                         </div>
                                     </div>
@@ -262,15 +309,21 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
                                     </div>
 
                                     <div
-                                        className={`chat-footer text-xs text-muted-foreground ${
+                                        className={`chat-footer text-xs text-muted-foreground line-clamp-1 @footer-container ${
                                             isMessageSentByCurrentUser
                                                 ? "mr-px"
                                                 : "ml-px"
                                         }`}
                                     >
-                                        {formatTimeAgo(
-                                            new Date(message.createdAt)
-                                        )}
+                                        <div className="flex flex-nowrap gap-1">
+                                            <span className="overflow-hidden max-w-min text-ellipsis w-full line-clamp-1">
+                                                ~{message.sender.username}
+                                            </span>{" "}
+                                            |{" "}
+                                            {formatTimeAgo(
+                                                new Date(message.createdAt)
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </>
@@ -351,7 +404,10 @@ const GroupBody: React.FC<GroupBodyProps> = function ({
     groupId,
     currentUserId,
     className,
+    socket,
 }) {
+    console.log("Current group: ", groupId);
+
     return (
         <>
             <main
@@ -360,13 +416,14 @@ const GroupBody: React.FC<GroupBodyProps> = function ({
                 <GroupBodyNavBar groupId={groupId} />
 
                 <GroupBodyMessagesContainer
-                    groupId={groupId}
+                    currGroupId={groupId}
                     currentUserId={currentUserId}
+                    socket={socket}
                 />
 
                 <section className="h-[4.5rem] flex flex-row flex-nowrap items-center w-full bg-gray-600 py-2 rounded-b-md bottom-0">
                     <ul className="w-full rounded-b-md">
-                        <SendMessageForm groupId={groupId} />
+                        <SendMessageForm socket={socket} groupId={groupId} />
                     </ul>
                 </section>
             </main>

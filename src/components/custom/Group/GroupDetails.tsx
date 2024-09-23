@@ -22,8 +22,6 @@ const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
     children,
     groupDetails,
 }) => {
-    console.log(groupDetails);
-
     return (
         <Popover>
             <PopoverTrigger asChild>{children}</PopoverTrigger>
