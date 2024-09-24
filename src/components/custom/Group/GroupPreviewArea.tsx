@@ -21,7 +21,7 @@ const GroupsPreview: React.FC<GroupsPreviewProps> = function ({
     if (isFetching) {
         return (
             <section className="w-full h-full flex justify-center items-center">
-                <p className="text-lg font-semibold flex justify-center items-center gap-2">
+                <p className="text-lg flex justify-center items-center gap-2">
                     <Loader2Icon className="animate-spin size-5" /> Loading
                 </p>
             </section>
