@@ -31,7 +31,6 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
 
     const {
         register,
-        setError,
         handleSubmit,
         formState: { errors, isSubmitting },
     } = useForm<UpdateProfileSchema>({
@@ -160,7 +159,7 @@ const Profile: React.FC<ProfileProps> = function ({ user }) {
                                 {...register("bio")}
                                 placeholder="Something about you ..."
                                 className="w-[550px] resize-none min-h-[100px] rounded-md border border-input bg-background px-3 pl-4 py-2 pt-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[1.5px] focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            ></textarea>
+                            />
                             {errors.bio && (
                                 <p className="text-red-500 text-[.875rem] font-light mt-1 pl-[2px]">
                                     {errors.bio.message}
