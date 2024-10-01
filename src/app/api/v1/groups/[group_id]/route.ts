@@ -3,6 +3,8 @@ import Group from "@/models/group.model";
 import { isValidObjectId } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
+import { ZodError } from "zod";
+import { updateGroupSchema } from "@/lib/validationSchemas/update-group";
 
 interface RouteParams {
     params: {
@@ -51,37 +53,15 @@ export async function GET(
             {
                 $lookup: {
                     from: "users",
-                    foreignField: "_id",
-                    localField: "admin",
-                    as: "admin",
-                    pipeline: [
-                        {
-                            $project: {
-                                name: 1,
-                                username: 1,
-                                avatar: 1,
-                            },
-                        },
-                    ],
-                },
-            },
-            {
-                $unwind: {
-                    path: "$admin",
-                },
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    foreignField: "_id",
                     localField: "createdBy",
+                    foreignField: "_id",
                     as: "createdBy",
                     pipeline: [
                         {
                             $project: {
                                 name: 1,
-                                username: 1,
                                 avatar: 1,
+                                username: 1,
                             },
                         },
                     ],
@@ -90,6 +70,7 @@ export async function GET(
             {
                 $unwind: {
                     path: "$createdBy",
+                    preserveNullAndEmptyArrays: true,
                 },
             },
             {
@@ -101,12 +82,34 @@ export async function GET(
                     pipeline: [
                         {
                             $project: {
-                                avatar: 1,
                                 name: 1,
                                 username: 1,
+                                avatar: 1,
                             },
                         },
                     ],
+                },
+            },
+            {
+                $addFields: {
+                    members: {
+                        $map: {
+                            input: "$members",
+                            as: "member",
+                            in: {
+                                _id: "$$member._id",
+                                isAdmin: {
+                                    $in: ["$$member._id", "$admin"],
+                                },
+                                isCreator: {
+                                    $eq: ["$$member._id", "$createdBy._id"],
+                                },
+                                name: "$$member.name",
+                                username: "$$member.username",
+                                avatar: "$$member.avatar",
+                            },
+                        },
+                    },
                 },
             },
             {
@@ -115,18 +118,6 @@ export async function GET(
                 },
             },
         ]);
-
-        if (!group) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        message: "Group not found",
-                    },
-                },
-                { status: 404 }
-            );
-        }
 
         return NextResponse.json({
             success: true,
@@ -139,6 +130,79 @@ export async function GET(
                 success: false,
                 error: {
                     message: "Something went wrong, while fetching the group",
+                },
+            },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: RouteParams
+): Promise<NextResponse<ApiResponse>> {
+    try {
+        const data = await request.json();
+        const validatedData = updateGroupSchema.parse(data);
+
+        const groupId = params.group_id;
+
+        if (!isValidObjectId(groupId)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Invalid group id",
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        if (!(await Group.exists({ _id: groupId }))) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Group not found",
+                    },
+                },
+                { status: 404 }
+            );
+        }
+
+        await Group.findByIdAndUpdate(groupId, {
+            name: validatedData.name,
+            description: validatedData.description,
+        });
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Group details are updated successfully",
+            },
+            { status: 200 }
+        );
+    } catch (error) {
+        if (error instanceof ZodError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message:
+                            "Something went wrong while updating the group details",
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message:
+                        "Something went wrong while updating the group details",
                 },
             },
             { status: 500 }

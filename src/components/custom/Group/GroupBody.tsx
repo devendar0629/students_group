@@ -4,23 +4,21 @@ import { useGroupData, useMessages } from "@/app/clientHooks/useGroupData";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import axios from "@/lib/config/axios.config";
 import {
-    mediaFileSchemaClient,
     sendMessageInGroupSchemaClient,
     SendMessageInGroupSchemaClient,
 } from "@/lib/validationSchemas/send-message";
 import { formatTimeAgo } from "@/utils/dateformatter";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
 import {
     Loader2Icon,
     PaperclipIcon,
     SendHorizontalIcon,
-    SettingsIcon,
+    Settings,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +27,9 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import GroupDetails from "./GroupDetails";
 import { Socket } from "socket.io-client";
 import maleAvatarPlaceholder from "@/../public/male-avatar-placeholder.jpg";
+import GroupSettings from "./GroupSettings";
+
+export type ActiveTab = "Chat" | "Settings";
 
 interface GroupBodyProps {
     groupId: string;
@@ -42,7 +43,12 @@ interface SendMessageFormProps {
     socket: Socket | null;
 }
 interface GroupBodyNavBarProps {
-    groupId: string;
+    onActiveTabChange: (value: ActiveTab) => void;
+    groupObj: {
+        isFetching: boolean;
+        groupData: any;
+        error: string;
+    };
 }
 interface GroupBodyMessagesContainerProps {
     currGroupId: string;
@@ -241,7 +247,7 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
             <section
                 ref={messageContainerRef}
                 id="messagesContainer"
-                className="bg-slate-900 grow px-2 py-1.5 flex flex-col-reverse overflow-y-auto"
+                className="bg-slate-900 grow px-2.5 lg:px-3.5 py-1.5 flex flex-col-reverse overflow-y-auto"
             >
                 <InfiniteScroll
                     scrollThreshold={0.95}
@@ -337,8 +343,11 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
     );
 };
 
-const GroupBodyNavBar: React.FC<GroupBodyNavBarProps> = ({ groupId }) => {
-    const { isFetching, groupData, error } = useGroupData(groupId);
+const GroupBodyNavBar: React.FC<GroupBodyNavBarProps> = ({
+    onActiveTabChange,
+    groupObj,
+}) => {
+    const { isFetching, groupData, error } = groupObj;
 
     const { toast } = useToast();
     if (error) {
@@ -358,7 +367,7 @@ const GroupBodyNavBar: React.FC<GroupBodyNavBarProps> = ({ groupId }) => {
                         Loading ...
                     </p>
                 ) : (
-                    <ul className="flex flex-row list-none flex-nowrap justify-between px-2 py-1 rounded-t-md h-full items-center">
+                    <ul className="flex flex-row list-none flex-nowrap justify-between px-2 pr-2.5 py-1 rounded-t-md h-full items-center">
                         <GroupDetails groupDetails={groupData}>
                             <li className="flex flex-col flex-nowrap justify-center font-semibold ml-3.5 rounded-md px-2.5 pt-px pb-1.5 hover:bg-gray-500 hover:cursor-pointer">
                                 <p className="text-[1.25rem] ml-px font-semibold">
@@ -371,22 +380,32 @@ const GroupBodyNavBar: React.FC<GroupBodyNavBarProps> = ({ groupId }) => {
                         </GroupDetails>
 
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="mr-3 hover:bg-slate-400 p-[0.3rem] rounded-[48%]">
+                            <DropdownMenuTrigger className="mr-3 hover:bg-slate-400 p-[0.2rem] rounded-full">
                                 <svg
-                                    fill="#fef"
-                                    className="height-auto w-5"
-                                    version="1.1"
                                     xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 32.055 32.055"
+                                    height="24px"
+                                    viewBox="0 -960 960 960"
+                                    width="24px"
+                                    fill="#e8eaed"
                                 >
-                                    <g>
-                                        <path d="M3.968,12.061C1.775,12.061,0,13.835,0,16.027c0,2.192,1.773,3.967,3.968,3.967c2.189,0,3.966-1.772,3.966-3.967C7.934,13.835,6.157,12.061,3.968,12.061z M16.233,12.061c-2.188,0-3.968,1.773-3.968,3.965c0,2.192,1.778,3.967,3.968,3.967s3.97-1.772,3.97-3.967C20.201,13.835,18.423,12.061,16.233,12.061z M28.09,12.061c-2.192,0-3.969,1.774-3.969,3.967c0,2.19,1.774,3.965,3.969,3.965c2.188,0,3.965-1.772,3.965-3.965S30.278,12.061,28.09,12.061z" />
-                                    </g>
+                                    <path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z" />
                                 </svg>
                             </DropdownMenuTrigger>
 
-                            <DropdownMenuContent>
-                                <SettingsIcon />
+                            <DropdownMenuContent className="p-2.5 rounded-xl lg:mr-4 mr-2.5 space-y-1">
+                                {/* Dropdown menu items start */}
+
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        onActiveTabChange("Settings")
+                                    }
+                                    className="flex flex-row items-center gap-2.5 pl-2 pr-3 cursor-pointer "
+                                >
+                                    <Settings className="size-[1.1rem]" />{" "}
+                                    <p className="text-sm">Settings</p>
+                                </DropdownMenuItem>
+
+                                {/* Dropdown menu items end */}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </ul>
@@ -402,25 +421,58 @@ const GroupBody: React.FC<GroupBodyProps> = function ({
     className,
     socket,
 }) {
+    const [currentActiveTab, setCurrentActiveTab] = useState<ActiveTab>("Chat");
+    const { isFetching, error, groupData, updateGroupDetails } =
+        useGroupData(groupId);
+
+    useEffect(() => {
+        // This will forcefully place the chat screen of current group
+        // if any other group's settings page is open
+        setCurrentActiveTab("Chat");
+    }, [groupId]);
+
     return (
         <>
-            <main
-                className={`h-[calc(100%-0.875rem)] relative flex flex-col flex-nowrap rounded-md my-auto w-[calc(100%-0.975rem)] mx-auto bg-slate-900 ${className}`}
-            >
-                <GroupBodyNavBar groupId={groupId} />
+            {currentActiveTab === "Chat" && (
+                <main
+                    className={`h-[calc(100%-0.875rem)] relative flex flex-col flex-nowrap rounded-md my-auto w-[calc(100%-0.975rem)] mx-auto bg-slate-900 ${className}`}
+                >
+                    <GroupBodyNavBar
+                        groupObj={{ isFetching, error, groupData }}
+                        onActiveTabChange={(value: ActiveTab) =>
+                            setCurrentActiveTab(value)
+                        }
+                    />
 
-                <GroupBodyMessagesContainer
-                    currGroupId={groupId}
-                    currentUserId={currentUserId}
+                    <GroupBodyMessagesContainer
+                        currGroupId={groupId}
+                        currentUserId={currentUserId}
+                        socket={socket}
+                    />
+
+                    <section className="h-[4.5rem] flex flex-row flex-nowrap items-center w-full bg-gray-600 py-2 rounded-b-md bottom-0">
+                        <ul className="w-full rounded-b-md">
+                            <SendMessageForm
+                                socket={socket}
+                                groupId={groupId}
+                            />
+                        </ul>
+                    </section>
+                </main>
+            )}
+
+            {currentActiveTab === "Settings" && (
+                <GroupSettings
                     socket={socket}
+                    groupDetails={groupData}
+                    groupId={groupId}
+                    currUserId={currentUserId}
+                    onGroupDetailsChange={(name, description) => {
+                        updateGroupDetails({ name, description });
+                    }}
+                    onBackButtonClick={(value) => setCurrentActiveTab(value)}
                 />
-
-                <section className="h-[4.5rem] flex flex-row flex-nowrap items-center w-full bg-gray-600 py-2 rounded-b-md bottom-0">
-                    <ul className="w-full rounded-b-md">
-                        <SendMessageForm socket={socket} groupId={groupId} />
-                    </ul>
-                </section>
-            </main>
+            )}
         </>
     );
 };

@@ -5,18 +5,34 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { UserRoundCogIcon } from "lucide-react";
 import { PropsWithChildren } from "react";
+import GroupCreatorIcon from "./GroupCreatorIcon";
+import GroupAdminIcon from "./GroupAdminIcon";
 
 interface GroupDetailsProps {
     groupDetails: any;
 }
+interface UserPreviewProps {
+    userName: string;
+    isAdmin: boolean;
+    isCreator: boolean;
+}
+
+const UserPreview: React.FC<UserPreviewProps> = ({
+    userName,
+    isAdmin,
+    isCreator,
+}) => {
+    return (
+        <div className="text-sm pl-1.5 pr-2 items-center flex flex-row flex-nowrap gap-2 justify-between">
+            <div className="line-clamp-1 grow text-ellipsis">~ {userName}</div>
+
+            {isAdmin && <GroupAdminIcon />}
+
+            {isCreator && <GroupCreatorIcon />}
+        </div>
+    );
+};
 
 const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
     children,
@@ -55,7 +71,7 @@ const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
                     </p>
 
                     <div className="mt-3">
-                        <p className="text-sm">
+                        <div className="text-sm">
                             <p className="text-muted-foreground">
                                 Members ({groupDetails?.members.length})
                             </p>
@@ -64,37 +80,11 @@ const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
                                     {groupDetails?.members.map(
                                         (member: any, index: number) => (
                                             <>
-                                                <div className="text-sm pl-1.5 pr-2 items-center flex flex-row flex-nowrap gap-2 justify-between">
-                                                    <div
-                                                        key={member._id}
-                                                        className="line-clamp-1 grow text-ellipsis"
-                                                    >
-                                                        ~ {member.username}
-                                                    </div>
-
-                                                    {groupDetails?.createdBy
-                                                        ._id === member._id && (
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger
-                                                                    asChild
-                                                                    className="cursor-default"
-                                                                >
-                                                                    <span>
-                                                                        <UserRoundCogIcon className="h-[1.15rem] text-slate-300" />
-                                                                    </span>
-                                                                </TooltipTrigger>
-
-                                                                <TooltipContent>
-                                                                    <p className="text-[0.775rem]">
-                                                                        Group
-                                                                        admin
-                                                                    </p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    )}
-                                                </div>
+                                                <UserPreview
+                                                    userName={member.username}
+                                                    isAdmin={member.isAdmin}
+                                                    isCreator={member.isCreator}
+                                                />
                                                 {index + 1 <
                                                     groupDetails?.members
                                                         .length && (
@@ -105,7 +95,7 @@ const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
                                     )}
                                 </div>
                             </ScrollArea>
-                        </p>
+                        </div>
                     </div>
                 </section>
             </PopoverContent>
