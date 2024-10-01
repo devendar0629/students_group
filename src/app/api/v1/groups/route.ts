@@ -38,7 +38,7 @@ export async function POST(
         const newGroup = await Group.create({
             name: validatedData.name,
             description: validatedData.description,
-            admin: token?._id,
+            admin: [token?._id],
             createdBy: token?._id,
             members: validatedData.members,
         });
