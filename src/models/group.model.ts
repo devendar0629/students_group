@@ -2,11 +2,13 @@ import mongoose, { InferSchemaType } from "mongoose";
 
 const groupSchema = new mongoose.Schema(
     {
-        admin: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: [true, "admin field is required in Group"],
-        },
+        admin: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                required: [true, "admin field is required in Group"],
+            },
+        ],
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",

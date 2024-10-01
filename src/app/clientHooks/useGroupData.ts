@@ -1,6 +1,6 @@
 import axios from "@/lib/config/axios.config";
 import { AxiosError } from "axios";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 
 interface MongooseDocument {
@@ -154,6 +154,25 @@ export const useGroupData = (groupId: string) => {
     const [error, setError] = useState<string>("");
     const [groupData, setGroupData] = useState<Group | undefined>(undefined);
 
+    // A function just for updating the UI from a component
+    const updateGroupDetails = ({
+        name,
+        description,
+    }: {
+        name: string;
+        description: string;
+    }) => {
+        if (!groupData) return;
+
+        setGroupData((prev) => {
+            const update = prev;
+            update!.name = name;
+            update!.description = description;
+
+            return update;
+        });
+    };
+
     useEffect(() => {
         const fetchGroupData = async () => {
             try {
@@ -187,5 +206,5 @@ export const useGroupData = (groupId: string) => {
         })();
     }, [groupId]);
 
-    return { isFetching, error, groupData };
+    return { isFetching, error, groupData, updateGroupDetails };
 };

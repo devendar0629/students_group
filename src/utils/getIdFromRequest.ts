@@ -7,7 +7,7 @@ export const getIdFromRequest = async (request: NextRequest) => {
             req: request,
         });
 
-        return userToken?._id;
+        return userToken?._id.toString();
     } catch (error) {
         return null;
     }

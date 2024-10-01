@@ -131,7 +131,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                             </div>
 
                             {index + 1 < options.length && (
-                                <hr role="separator" />
+                                <hr
+                                    key={`${option.value}--${index}`}
+                                    role="separator"
+                                />
                             )}
                         </>
                     ))}
