@@ -2,12 +2,10 @@
 
 import MultiSelect, { Option } from "@/components/custom/MultiSelect";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import axios from "@/lib/config/axios.config";
-import { CheckedState } from "@radix-ui/react-checkbox";
 import { AxiosError } from "axios";
-import { ArrowDownIcon, Loader2Icon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 

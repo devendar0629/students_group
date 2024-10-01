@@ -5,7 +5,6 @@ import { useToast } from "@/components/ui/use-toast";
 import axios from "@/lib/config/axios.config";
 import { AxiosError } from "axios";
 import { Loader2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface RemoveFriendButtonProps {
