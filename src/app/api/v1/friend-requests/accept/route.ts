@@ -41,7 +41,6 @@ export async function POST(
         const friendRequestObject = await FriendRequest.findById(
             friendRequestId
         );
-        console.log(friendRequestObject);
         const currentUserId = await getIdFromRequest(request);
         const currentUserObject = await User.findById(currentUserId).select(
             "-password"
