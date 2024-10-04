@@ -11,7 +11,7 @@ import {
 import { TUserPreferences } from "@/models/user_preferences.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
-import { Loader2Icon, LogOutIcon } from "lucide-react";
+import { Loader2Icon, LogOutIcon, SaveIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -184,7 +184,7 @@ const Settings: React.FC<SettingsProps> = function ({ userPreferences }) {
                     </section>
 
                     <Button
-                        className="w-fit"
+                        className="w-fit px-4 py-2.5"
                         size="sm"
                         type="submit"
                         variant={"secondary"}
@@ -200,11 +200,11 @@ const Settings: React.FC<SettingsProps> = function ({ userPreferences }) {
                     <Button
                         onClick={handleLogout}
                         disabled={isLoggingOut}
-                        className="mt-5"
+                        className="mt-5 pl-5 pr-4"
                         variant="secondary"
                     >
                         {isLoggingOut && (
-                            <Loader2Icon className="animate-spin mr-2 h-5 mb-px" />
+                            <Loader2Icon className="animate-spin mr-2 size-[1.2rem] mb-0.5" />
                         )}
                         Logout
                         <LogOutIcon className="ml-1 h-3.5" />
