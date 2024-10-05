@@ -132,6 +132,8 @@ export async function GET(
             { status: 200 }
         );
     } catch (error) {
+        console.log("ERROR: ", error);
+
         return NextResponse.json(
             {
                 success: false,
