@@ -14,7 +14,6 @@ export async function GET(
     try {
         const currentUserId = await getIdFromRequest(request);
         const userId = currentUserId;
-        const { searchParams } = new URL(request.url);
 
         if (!isValidObjectId(userId)) {
             return NextResponse.json(
@@ -67,6 +66,8 @@ export async function GET(
                         {
                             $project: {
                                 username: 1,
+                                name: 1,
+                                avatar: 1,
                             },
                         },
                     ],
@@ -75,6 +76,28 @@ export async function GET(
             {
                 $unwind: {
                     path: "$receiver",
+                },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "sender",
+                    foreignField: "_id",
+                    as: "sender",
+                    pipeline: [
+                        {
+                            $project: {
+                                username: 1,
+                                name: 1,
+                                avatar: 1,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $unwind: {
+                    path: "$sender",
                 },
             },
         ]);

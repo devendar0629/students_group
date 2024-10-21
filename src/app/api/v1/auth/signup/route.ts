@@ -59,7 +59,7 @@ export async function POST(
         });
 
         const verificationCode = cryptoRandomInt(100000, 1000000).toString();
-        const tokenInstance = await Token.create({
+        await Token.create({
             user: newUser._id,
             verificationCode,
             verificationCodeExpiry: new Date(Date.now() + 300000), // 5 minutes
@@ -72,7 +72,7 @@ export async function POST(
         await newUser.save();
         await userPreferencesInstance.save();
 
-        const mailResponse = await resend.emails.send({
+        await resend.emails.send({
             from: "onboarding@resend.dev",
             subject: "Verification code",
             to: process.env.TEST_RECEIVER_MAIL!, // CHANGE IN PRODUCTION !

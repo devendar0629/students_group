@@ -52,16 +52,159 @@ export async function GET(
             },
             {
                 $lookup: {
-                    from: "users",
+                    from: "groupmembers",
+                    localField: "members",
+                    foreignField: "_id",
+                    as: "members",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "userId",
+                                foreignField: "_id",
+                                as: "user",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            name: 1,
+                                            username: 1,
+                                            avatar: 1,
+                                            _id: 0,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            $unwind: {
+                                path: "$user",
+                            },
+                        },
+                        {
+                            $addFields: {
+                                joinedAt: "$createdAt",
+                                user_id: "$user._id",
+                                _id: "$_id",
+                            },
+                        },
+                        {
+                            $replaceRoot: {
+                                newRoot: {
+                                    $mergeObjects: ["$$ROOT", "$user"],
+                                },
+                            },
+                        },
+                        {
+                            $project: {
+                                createdAt: 0,
+                                updatedAt: 0,
+                                user: 0,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $lookup: {
+                    from: "groupmembers",
+                    localField: "admin",
+                    foreignField: "_id",
+                    as: "admin",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "userId",
+                                foreignField: "_id",
+                                as: "user",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            name: 1,
+                                            username: 1,
+                                            avatar: 1,
+                                            _id: 0,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            $unwind: {
+                                path: "$user",
+                            },
+                        },
+                        {
+                            $addFields: {
+                                joinedAt: "$createdAt",
+                                _id: "$_id",
+                            },
+                        },
+                        {
+                            $replaceRoot: {
+                                newRoot: {
+                                    $mergeObjects: ["$$ROOT", "$user"],
+                                },
+                            },
+                        },
+                        {
+                            $project: {
+                                user: 0,
+                                createdAt: 0,
+                                updatedAt: 0,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $lookup: {
+                    from: "groupmembers",
                     localField: "createdBy",
                     foreignField: "_id",
                     as: "createdBy",
                     pipeline: [
                         {
+                            $lookup: {
+                                from: "users",
+                                localField: "userId",
+                                foreignField: "_id",
+                                as: "user",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            name: 1,
+                                            username: 1,
+                                            avatar: 1,
+                                            userId: "$_id",
+                                            _id: 0,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            $unwind: {
+                                path: "$user",
+                            },
+                        },
+                        {
+                            $addFields: {
+                                joinedAt: "$createdAt",
+                            },
+                        },
+                        {
+                            $replaceRoot: {
+                                newRoot: {
+                                    $mergeObjects: ["$$ROOT", "$user"],
+                                },
+                            },
+                        },
+                        {
                             $project: {
-                                name: 1,
-                                avatar: 1,
-                                username: 1,
+                                user: 0,
+                                createdAt: 0,
+                                updatedAt: 0,
                             },
                         },
                     ],
@@ -74,57 +217,45 @@ export async function GET(
                 },
             },
             {
-                $lookup: {
-                    from: "users",
-                    localField: "members",
-                    foreignField: "_id",
-                    as: "members",
-                    pipeline: [
-                        {
-                            $project: {
-                                name: 1,
-                                username: 1,
-                                avatar: 1,
-                            },
-                        },
-                    ],
-                },
-            },
-            {
                 $addFields: {
                     members: {
                         $map: {
                             input: "$members",
                             as: "member",
                             in: {
-                                _id: "$$member._id",
-                                isAdmin: {
-                                    $in: ["$$member._id", "$admin"],
-                                },
-                                isCreator: {
-                                    $eq: ["$$member._id", "$createdBy._id"],
-                                },
-                                name: "$$member.name",
-                                username: "$$member.username",
-                                avatar: "$$member.avatar",
+                                $mergeObjects: [
+                                    {
+                                        isAdmin: {
+                                            $in: ["$$member._id", "$admin._id"],
+                                        },
+                                        isCreator: {
+                                            $eq: [
+                                                "$$member._id",
+                                                "$createdBy._id",
+                                            ],
+                                        },
+                                    },
+
+                                    "$$member",
+                                ],
                             },
                         },
                     },
                 },
             },
-            {
-                $project: {
-                    messages: 0,
-                },
-            },
         ]);
 
-        return NextResponse.json({
-            success: true,
-            message: "Group fetched successfully",
-            data: group[0],
-        });
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Group fetched successfully",
+                data: group[0],
+            },
+            { status: 200 }
+        );
     } catch (error) {
+        console.log("ERROR: ", error);
+
         return NextResponse.json(
             {
                 success: false,

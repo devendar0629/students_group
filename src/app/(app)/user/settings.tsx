@@ -11,10 +11,10 @@ import {
 import { TUserPreferences } from "@/models/user_preferences.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
-import { Loader2Icon, LogOutIcon, SaveIcon } from "lucide-react";
+import { Loader2Icon, LogOutIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 interface SettingsProps {
@@ -25,10 +25,6 @@ const Settings: React.FC<SettingsProps> = function ({ userPreferences }) {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
-    const themeInputRef = useRef<HTMLInputElement | null>(null);
-    const acceptFriendRequestsFromAnyoneRef = useRef<HTMLInputElement | null>(
-        null
-    );
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -56,10 +52,9 @@ const Settings: React.FC<SettingsProps> = function ({ userPreferences }) {
     };
 
     const {
-        formState: { errors, isSubmitting },
+        formState: { isSubmitting },
         register,
         handleSubmit,
-        setError,
         setValue,
     } = useForm<UpdatePreferencesSchema>({
         defaultValues: {

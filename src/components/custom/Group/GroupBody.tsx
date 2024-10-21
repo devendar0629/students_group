@@ -20,14 +20,13 @@ import {
     SendHorizontalIcon,
     Settings,
 } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import GroupDetails from "./GroupDetails";
 import { Socket } from "socket.io-client";
-import maleAvatarPlaceholder from "@/../public/male-avatar-placeholder.jpg";
 import GroupSettings from "./GroupSettings";
+import UserAvatar from "../UserAvatar";
 
 export type ActiveTab = "Chat" | "Settings";
 
@@ -58,7 +57,6 @@ interface GroupBodyMessagesContainerProps {
 
 const SendMessageForm: React.FC<SendMessageFormProps> = ({
     groupId,
-    onMessageCreation,
     socket,
 }) => {
     const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false);
@@ -279,13 +277,9 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
                                     {/* Sender avatar */}
                                     <div className="chat-image avatar">
                                         <div className="w-10 rounded-full">
-                                            <Image
-                                                width={40}
-                                                height={40}
-                                                alt="message sender avatar image"
-                                                src={
-                                                    message.sender?.avatar ||
-                                                    maleAvatarPlaceholder.src
+                                            <UserAvatar
+                                                avatarUrl={
+                                                    message.sender?.avatar
                                                 }
                                             />
                                         </div>
@@ -319,7 +313,7 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
                                     >
                                         <div className="flex flex-nowrap gap-1">
                                             <span className="overflow-hidden max-w-min text-ellipsis w-full line-clamp-1">
-                                                ~{message.sender.username}
+                                                ~{message.sender?.username}
                                             </span>{" "}
                                             |{" "}
                                             {formatTimeAgo(

@@ -22,7 +22,6 @@ const Signin: React.FC<PageProps> = function () {
     const {
         formState: { isSubmitting, errors },
         register,
-        setError,
         handleSubmit,
     } = useForm<SigninSchema>({
         resolver: zodResolver(signinSchema),
@@ -105,8 +104,8 @@ const Signin: React.FC<PageProps> = function () {
                                     placeholder="Password"
                                 />
 
-                                <span
-                                    tabIndex={0}
+                                <button
+                                    type="button"
                                     onClick={() =>
                                         setPasswordVisible((prev) => !prev)
                                     }
@@ -117,7 +116,7 @@ const Signin: React.FC<PageProps> = function () {
                                     ) : (
                                         <EyeOffIcon />
                                     )}
-                                </span>
+                                </button>
                             </div>
                             {errors.password && (
                                 <p className="text-red-500 text-center font-light mt-0.5 text-[.95rem]">

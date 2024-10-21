@@ -1,5 +1,6 @@
 "use client";
 
+import UserAvatar from "@/components/custom/UserAvatar";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "@/lib/config/axios.config";
 import { formatTimeAgo } from "@/utils/dateformatter";
@@ -101,7 +102,12 @@ const FriendRequest: React.FC<FriendRequestProps> = function ({
     return (
         <>
             <div className="flex flex-row flex-nowrap rounded-sm w-full py-2.5 px-5 justify-between items-center bg-sky-900">
-                <p>~{friendRequest.receiver.username}</p>
+                <UserAvatar
+                    width={35}
+                    height={35}
+                    avatarUrl={friendRequest.sender.avatar}
+                />
+                <p>~{friendRequest.sender.username}</p>
                 <div className="flex gap-1.5 flex-row mr-6 flex-nowrap items-center justify-center">
                     {!isSender && (
                         <button

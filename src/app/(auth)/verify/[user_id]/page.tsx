@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "@/lib/config/axios.config";
 import { AxiosError } from "axios";
-import { Loader2, UserCheckIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface PageProps {}
 

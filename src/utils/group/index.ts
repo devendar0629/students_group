@@ -1,6 +1,10 @@
-import { TGroup } from "@/models/group.model";
-
-export const isGroupAdmin = (group: TGroup, userId?: string | null) => {
+/**
+ *
+ * @param group Group object with admin field populated
+ * @param userId User's object id string to check
+ * @returns boolean
+ */
+export const isGroupAdmin = (group: any, userId?: string | null) => {
     if (!userId) {
         return false;
     }
@@ -8,7 +12,7 @@ export const isGroupAdmin = (group: TGroup, userId?: string | null) => {
     let groupAdminCount = group.admin.length;
 
     for (let i = 0; i < groupAdminCount; i++) {
-        if (group.admin[i]._id.toString() === userId) {
+        if (group.admin[i].userId.toString() === userId) {
             return true;
         }
     }
@@ -16,7 +20,13 @@ export const isGroupAdmin = (group: TGroup, userId?: string | null) => {
     return false;
 };
 
-export const isGroupMember = (group: TGroup, userId?: string | null) => {
+/**
+ *
+ * @param group Group object with members field populated
+ * @param userId User's object id string to check
+ * @returns boolean
+ */
+export const isGroupMember = (group: any, userId?: string | null) => {
     if (!userId) {
         return false;
     }
@@ -24,7 +34,7 @@ export const isGroupMember = (group: TGroup, userId?: string | null) => {
     const groupMemberCount = group.members.length;
 
     for (let i = 0; i < groupMemberCount; i++) {
-        if (group.members[i]._id.toString() === userId) {
+        if (group.members[i].userId.toString() === userId) {
             return true;
         }
     }

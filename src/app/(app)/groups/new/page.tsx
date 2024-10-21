@@ -105,7 +105,7 @@ const Page: React.FC = () => {
 
     return (
         <main className="h-screen w-full grid place-content-center">
-            <h2 className="text-3xl font-bold text-center mb-10">
+            <h2 className="text-4xl font-bold text-center mb-16">
                 Create a Group
             </h2>
 
@@ -122,7 +122,7 @@ const Page: React.FC = () => {
                     <label className="mt-0.5">Description </label>
                     <textarea
                         ref={descriptionRef}
-                        className="w-[550px] resize-none min-h-[100px] rounded-md border border-input bg-background px-3 pl-4 py-2 pt-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[1.5px] focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-[550px] resize-none min-h-[100px] rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[1.5px] focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                 </section>
 
@@ -130,6 +130,7 @@ const Page: React.FC = () => {
                     selectLabel="Select friends"
                     options={options}
                     selectClassName="bg-slate-700 px-2.5 py-2.5"
+                    triggerClassName="pl-4"
                     selectItemClassName="px-3.5 hover:bg-gray-600 rounded-sm"
                     onChange={handleSelectionChange}
                 />
@@ -139,8 +140,9 @@ const Page: React.FC = () => {
                 )}
 
                 <Button
-                    className="mt-6 flex flex-row flex-nowrap gap-2 items-center"
+                    className="mt-6 flex flex-row flex-nowrap gap-2 items-center text-[0.925rem] font-semibold"
                     type="submit"
+                    disabled={isCreatingGroup}
                 >
                     {isCreatingGroup && (
                         <Loader2Icon className="animate-spin size-[1.09rem] mb-[1.5px]" />

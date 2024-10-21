@@ -1,28 +1,25 @@
-import { getIdFromRequest } from "@/utils/getIdFromRequest";
 import Group, { GroupMember } from "@/models/group.model";
-import User from "@/models/user.model";
-import { isValidObjectId } from "mongoose";
+import { getIdFromRequest } from "@/utils/getIdFromRequest";
+import { isValidObjectId, Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-import { Types } from "mongoose";
-import { connectDB } from "@/lib/db.config";
 
 interface RouteParams {
     params: {
         group_id: string;
     };
 }
+
 /**
  *
- * @description Removes a user from the group
+ * @description Enpoint to promote a group member to admin
  */
 export async function POST(
     request: NextRequest,
     { params }: RouteParams
 ): Promise<NextResponse<ApiResponse>> {
-    await connectDB();
     try {
-        const reqData = await request.json();
-        const userIdToBeRemoved = reqData.userId;
+        const reqBody = await request.json();
+        const userIdToBePromoted = reqBody.userId;
         const groupId = params.group_id;
 
         if (!isValidObjectId(groupId)) {
@@ -37,7 +34,7 @@ export async function POST(
             );
         }
 
-        if (!isValidObjectId(userIdToBeRemoved)) {
+        if (!isValidObjectId(userIdToBePromoted)) {
             return NextResponse.json(
                 {
                     success: false,
@@ -52,32 +49,15 @@ export async function POST(
         const currUserId = await getIdFromRequest(request);
         const currUserObjectId = new Types.ObjectId(currUserId!);
 
-        const userToBeRemovedObjectId = new Types.ObjectId(userIdToBeRemoved);
+        const userToBePromotedObjectId = new Types.ObjectId(userIdToBePromoted);
 
-        // The user cannot remove themself
-        if (userIdToBeRemoved === currUserId) {
+        // Prevent user from promoting themself
+        if (currUserId === userIdToBePromoted) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message: "Cannot remove yourself",
-                    },
-                },
-                { status: 400 }
-            );
-        }
-
-        // Check if the user to be removed exist
-        if (
-            !(await User.exists({
-                _id: currUserId,
-            }))
-        ) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        message: "User not found",
+                        message: "Cannot promote yourself",
                     },
                 },
                 { status: 404 }
@@ -96,6 +76,14 @@ export async function POST(
                     localField: "members",
                     foreignField: "_id",
                     as: "members",
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                userId: 1,
+                            },
+                        },
+                    ],
                 },
             },
             {
@@ -104,19 +92,33 @@ export async function POST(
                     localField: "admin",
                     foreignField: "_id",
                     as: "admin",
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                userId: 1,
+                            },
+                        },
+                    ],
                 },
             },
             {
-                $lookup: {
-                    from: "groupmembers",
-                    localField: "createdBy",
-                    foreignField: "_id",
-                    as: "createdBy",
+                $addFields: {
+                    currUser: {
+                        $filter: {
+                            input: "$members",
+                            as: "member",
+                            cond: {
+                                $eq: ["$$member.userId", currUserObjectId],
+                            },
+                            limit: 1,
+                        },
+                    },
                 },
             },
             {
                 $unwind: {
-                    path: "$createdBy",
+                    path: "$currUser",
                 },
             },
             {
@@ -128,26 +130,19 @@ export async function POST(
                         isMember: {
                             $in: [currUserObjectId, "$members.userId"],
                         },
-                        isCreator: {
-                            $eq: [currUserObjectId, "$createdBy.userId"],
-                        },
                     },
-                    userToBeRemoved: {
+                    userToBePromoted: {
                         isAdmin: {
-                            $in: [userToBeRemovedObjectId, "$admin.userId"],
+                            $in: [userToBePromotedObjectId, "$admin.userId"],
                         },
                         isMember: {
-                            $in: [userToBeRemovedObjectId, "$members.userId"],
-                        },
-                        isCreator: {
-                            $eq: [userToBeRemovedObjectId, "$createdBy.userId"],
+                            $in: [userToBePromotedObjectId, "$members.userId"],
                         },
                     },
                 },
             },
         ]).then((res) => res[0]);
 
-        // Check if the group exist
         if (!groupAggregation) {
             return NextResponse.json(
                 {
@@ -160,118 +155,87 @@ export async function POST(
             );
         }
 
-        // Check if the user to be removed is a group member
-        if (!groupAggregation.userToBeRemoved.isMember) {
+        // Check if the current user exists in the group
+        if (!groupAggregation.currUser.isMember) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message: "User is not a group member",
+                        message: "Cannot perform action",
+                        cause: "Current user is not a member of group",
+                    },
+                },
+                { status: 403 }
+            );
+        }
+
+        // Check if the user to be promoted exists in the group
+        if (!groupAggregation.userToBePromoted.isMember) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Cannot perform action",
+                        cause: "User is not a member of group",
                     },
                 },
                 { status: 400 }
             );
         }
 
-        // Cannot remove the group creator
-        if (groupAggregation.userToBeRemoved.isCreator) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        message: "Cannot perform action",
-                        cause: "Permission denied",
-                    },
-                },
-                { status: 403 }
-            );
-        }
-
-        // Check if the current user is a admin of group
+        // Check if the current user is a admin of the group
         if (!groupAggregation.currUser.isAdmin) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
                         message: "Cannot perform action",
-                        cause: "Not a group admin",
+                        cause: "Not an admin of the group",
                     },
                 },
                 { status: 403 }
             );
         }
 
-        // Only creators can remove admin
-        if (
-            groupAggregation.userToBeRemoved.isAdmin &&
-            !groupAggregation.currUser.isCreator
-        ) {
+        // Check the user to be added is already an admin in that group
+        if (groupAggregation.userToBePromoted.isAdmin) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message: "Cannot perform action",
-                        cause: "Not a group creator",
+                        message: "User is already an admin",
                     },
                 },
-                { status: 403 }
+                { status: 400 }
             );
         }
 
-        const userToBeRemovedGroupMemberObject = await GroupMember.findOne({
-            userId: userIdToBeRemoved,
+        const userToBePromotedGroupMember = await GroupMember.findOne({
+            userId: userIdToBePromoted,
         });
 
-        if (groupAggregation.userToBeRemoved.isAdmin) {
-            await Promise.all([
-                Group.findByIdAndUpdate(groupId, {
-                    $pull: {
-                        admin: userToBeRemovedGroupMemberObject!._id,
-                        members: userToBeRemovedGroupMemberObject!._id,
-                    },
-                }),
-                User.findByIdAndUpdate(userIdToBeRemoved, {
-                    $pull: {
-                        joinedGroups: groupId,
-                    },
-                }),
-                GroupMember.findByIdAndDelete(
-                    userToBeRemovedGroupMemberObject!._id
-                ),
-            ]);
-        } else {
-            await Promise.all([
-                Group.findByIdAndUpdate(groupId, {
-                    $pull: {
-                        members: userToBeRemovedGroupMemberObject?._id,
-                    },
-                }),
-                User.findByIdAndUpdate(userIdToBeRemoved, {
-                    $pull: {
-                        joinedGroups: groupId,
-                    },
-                }),
-                GroupMember.findByIdAndDelete(
-                    userToBeRemovedGroupMemberObject!._id
-                ),
-            ]);
-        }
+        await Group.findByIdAndUpdate(groupId, {
+            $push: {
+                admin: userToBePromotedGroupMember!._id,
+            },
+        });
 
         return NextResponse.json(
             {
                 success: true,
-                message: "User removed from group successfully",
+                message: "User promoted to admin successfully",
             },
             { status: 200 }
         );
     } catch (error) {
-        console.log("User remove Error: ", error);
+        console.log("Error promoting admin: ", error);
 
         return NextResponse.json(
             {
                 success: false,
                 error: {
-                    message: "Something went wrong while add the user to group",
+                    message:
+                        "Something went wrong while removing the user from group",
                 },
             },
             { status: 500 }

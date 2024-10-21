@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db.config";
-import Group from "@/models/group.model";
+import Group, { GroupMember } from "@/models/group.model";
 import User from "@/models/user.model";
 import UserPreferences from "@/models/user_preferences.model";
 import { getIdFromRequest } from "@/utils/getIdFromRequest";
@@ -22,6 +22,7 @@ export async function POST(
         const reqData = await request.json();
         const usernameToBeAdded = reqData.username;
 
+        // validate username
         if (!usernameToBeAdded?.trim()) {
             return NextResponse.json(
                 {
@@ -36,6 +37,7 @@ export async function POST(
 
         const groupId = params.group_id;
 
+        // validate groupId
         if (!isValidObjectId(groupId)) {
             return NextResponse.json(
                 {
@@ -49,7 +51,10 @@ export async function POST(
         }
 
         // Check if the group exist
-        const group = await Group.findById(groupId);
+        const group = await Group.findById(groupId).populate("members admin");
+
+        console.log("CHECK GP POPULATES: ", group);
+
         if (!group) {
             return NextResponse.json(
                 {
@@ -103,31 +108,18 @@ export async function POST(
             (friend) => friend._id.toString() === currUserId
         );
 
+        // if the user only accepts group invites from friends,
+        // validate that the adder is a friend
         if (
             userToBeAddedPreferences?.acceptGroupInvitesFrom === "FRIENDS" &&
             !isAdderFriend
         ) {
-            // Return error , if the adder is not a friend
             return NextResponse.json(
                 {
                     success: false,
                     error: {
                         message: "Cannot perform action",
                         reason: "Permission denied",
-                    },
-                },
-                { status: 400 }
-            );
-        }
-
-        // Check the user to be added is a member of group
-        // They shouldn't be a group member
-        if (isGroupMember(group, userIdToBeAdded)) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        message: "User is already a member of the group",
                     },
                 },
                 { status: 400 }
@@ -162,21 +154,28 @@ export async function POST(
             );
         }
 
-        userToBeAdded.joinedGroups.push(new Types.ObjectId(groupId));
-        group.members.push(new Types.ObjectId(userIdToBeAdded));
-
-        await Promise.all([userToBeAdded.save(), group.save()]).catch((err) => {
+        // Check the user to be added is a member of group
+        // They shouldn't be a group member
+        if (isGroupMember(group, userIdToBeAdded)) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message:
-                            "Something went wrong while adding the user to group",
+                        message: "User is already a member of the group",
                     },
                 },
-                { status: 500 }
+                { status: 400 }
             );
+        }
+
+        userToBeAdded.joinedGroups.push(new Types.ObjectId(groupId));
+        const newMemberObject = await GroupMember.create({
+            userId: userIdToBeAdded,
         });
+
+        group.members.push(newMemberObject._id);
+
+        await Promise.all([userToBeAdded.save(), group.save()]);
 
         return NextResponse.json(
             {
