@@ -4,7 +4,7 @@ import User from "@/models/user.model";
 import UserPreferences from "@/models/user_preferences.model";
 import { getIdFromRequest } from "@/utils/getIdFromRequest";
 import { isGroupAdmin, isGroupMember } from "@/utils/group";
-import { isValidObjectId, Types } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 interface RouteParams {
@@ -52,8 +52,6 @@ export async function POST(
 
         // Check if the group exist
         const group = await Group.findById(groupId).populate("members admin");
-
-        console.log("CHECK GP POPULATES: ", group);
 
         if (!group) {
             return NextResponse.json(
@@ -168,14 +166,22 @@ export async function POST(
             );
         }
 
-        userToBeAdded.joinedGroups.push(new Types.ObjectId(groupId));
         const newMemberObject = await GroupMember.create({
             userId: userIdToBeAdded,
         });
 
-        group.members.push(newMemberObject._id);
-
-        await Promise.all([userToBeAdded.save(), group.save()]);
+        await Promise.all([
+            User.findByIdAndUpdate(userIdToBeAdded, {
+                $push: {
+                    joinedGroups: groupId
+                }
+            }),
+            Group.findByIdAndUpdate(groupId,{
+                $push: {
+                    members: newMemberObject._id
+                }
+            })
+        ])
 
         return NextResponse.json(
             {
