@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { ZodError } from "zod";
 import { updateGroupSchema } from "@/lib/validationSchemas/update-group";
+import { getIdFromRequest } from "@/utils/getIdFromRequest";
 
 interface RouteParams {
     params: {
@@ -18,9 +19,9 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse>> {
     await connectDB();
     try {
-        const group_id = params.group_id;
+        const groupId = params.group_id;
 
-        if (!isValidObjectId(group_id)) {
+        if (!isValidObjectId(groupId)) {
             return NextResponse.json(
                 {
                     success: false,
@@ -32,7 +33,9 @@ export async function GET(
             );
         }
 
-        if (!(await Group.exists({ _id: group_id }))) {
+        const groupObjectId = new Types.ObjectId(groupId);
+
+        if (!(await Group.exists({ _id: groupId }))) {
             return NextResponse.json(
                 {
                     success: false,
@@ -44,10 +47,56 @@ export async function GET(
             );
         }
 
+        const currUserId = await getIdFromRequest(request);
+        const currUserObjectId = new Types.ObjectId(currUserId!);
+
+        const agg = await Group.aggregate([
+            {
+                $match: {
+                    _id: groupObjectId,
+                },
+            },
+            {
+                $lookup: {
+                    from: "groupmembers",
+                    localField: "members",
+                    foreignField: "_id",
+                    as: "members",
+                    pipeline: [
+                        {
+                            $project: {
+                                userId: 1,
+                                _id: 0,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $project: {
+                    isCurrUserMember: {
+                        $in: [currUserObjectId, "$members.userId"],
+                    },
+                },
+            },
+        ]).then((res) => res[0]);
+
+        if (!agg.isCurrUserMember) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Permission denied",
+                    },
+                },
+                { status: 403 }
+            );
+        }
+
         const group = await Group.aggregate([
             {
                 $match: {
-                    _id: new Types.ObjectId(group_id),
+                    _id: groupObjectId,
                 },
             },
             {
@@ -240,6 +289,41 @@ export async function GET(
                                 ],
                             },
                         },
+                    },
+                    currUser: {
+                        $filter: {
+                            input: "$members",
+                            as: "member",
+                            cond: {
+                                $eq: [currUserObjectId, "$$member.userId"],
+                            },
+                            limit: 1,
+                        },
+                    },
+                },
+            },
+            {
+                $unwind: {
+                    path: "$currUser",
+                },
+            },
+            {
+                $addFields: {
+                    currUser: {
+                        $mergeObjects: [
+                            "$currUser",
+                            {
+                                isAdmin: {
+                                    $in: [currUserObjectId, "$admin.userId"],
+                                },
+                                isCreator: {
+                                    $eq: [
+                                        currUserObjectId,
+                                        "$createdBy.userId",
+                                    ],
+                                },
+                            },
+                        ],
                     },
                 },
             },

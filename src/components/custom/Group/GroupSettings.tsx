@@ -220,21 +220,17 @@ const AddUserButton: React.FC<AddUserButtonProps> = ({ groupId }) => {
 
     return (
         <Dialog>
-            <DialogTrigger className="w-fit focus-within:outline-none">
-                <Button
-                    size={"lg"}
-                    variant={"outline"}
-                    className="flex flex-row flex-nowrap items-center gap-2 pl-4 pr-5"
-                >
+            <DialogTrigger className="w-fit">
+                <div className="flex flex-row flex-nowrap items-center gap-2 pl-4 pr-5 border py-2.5 border-slate-500 hover:bg-slate-500 rounded-md">
                     <PlusIcon className="size-[1.15rem] mb-0.5" />
                     <p className="text-sm">Add user</p>
-                </Button>
+                </div>
             </DialogTrigger>
 
             <DialogContent className="max-w-sm gap-2">
-                <DialogHeader className="text-2xl font-semibold">
+                <DialogTitle className="text-2xl font-semibold">
                     Add user
-                </DialogHeader>
+                </DialogTitle>
 
                 <DialogDescription>
                     Enter the username of the user to add to group
@@ -284,6 +280,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
     const groupDescriptionRef = useRef<HTMLTextAreaElement>(null);
 
     const { toast } = useToast();
+    const router = useRouter();
 
     const formSubmitHandler: React.FormEventHandler = async (e) => {
         e.preventDefault();
@@ -355,15 +352,129 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
 
     const promoteToAdmin = async (userIdToPromote: string) => {
         try {
-        } catch (error) {}
+            const response = await axios.post(
+                `/api/v1/groups/${groupId}/admin/promote`,
+                {
+                    userId: userIdToPromote,
+                }
+            );
+
+            if (response.status !== 200) {
+                toast({
+                    title: "Error",
+                    description:
+                        response.data?.error.message ??
+                        "Something went wrong while promoting the user to admin",
+                });
+            } else {
+                toast({
+                    title: "Success",
+                    description: "User promoted to admin successfully",
+                    className: "bg-green-700 text-slate-100",
+                });
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "Error",
+                    description:
+                        error.response?.data?.error.message ??
+                        "Something went wrong while promoting the user to admin",
+                });
+            }
+
+            toast({
+                title: "Error",
+                description:
+                    "Something went wrong while promoting the user to admin",
+            });
+        }
     };
 
     const demoteFromAdmin = async (userIdToDemote: string) => {
         try {
-        } catch (error) {}
+            const response = await axios.post(
+                `/api/v1/groups/${groupId}/admin/demote`,
+                {
+                    userId: userIdToDemote,
+                }
+            );
+
+            if (response.status !== 200) {
+                toast({
+                    title: "Error",
+                    description:
+                        response.data?.error.message ??
+                        "Something went wrong while demoting the user from admin",
+                });
+            } else {
+                toast({
+                    title: "Success",
+                    description: "User demoted from admin successfully",
+                    className: "bg-green-700 text-slate-100",
+                });
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "Error",
+                    description:
+                        error.response?.data?.error.message ??
+                        "Something went wrong while demoting the user from admin",
+                });
+            }
+
+            toast({
+                title: "Error",
+                description:
+                    "Something went wrong while demoting the user from admin",
+            });
+        }
     };
 
-    const isCurrUserAdmin = groupDetails.admin.includes(currUserId);
+    const removeFromGroup = async (userIdToRemove: string) => {
+        try {
+            const response = await axios.post(
+                `/api/v1/groups/${groupId}/remove-user`,
+                {
+                    userId: userIdToRemove,
+                }
+            );
+
+            if (response.status !== 200) {
+                toast({
+                    title: "Error",
+                    description:
+                        response.data?.error.message ??
+                        "Something went wrong while removing the user from group",
+                });
+            } else {
+                toast({
+                    title: "Success",
+                    description: "User removed from group successfully",
+                    className: "bg-green-700 text-slate-100",
+                });
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "Error",
+                    description:
+                        error.response?.data?.error.message ??
+                        "Something went wrong while removing the user from group",
+                });
+            }
+
+            toast({
+                title: "Error",
+                description:
+                    "Something went wrong while removing the user from group",
+            });
+        }
+    };
+
+    const isCurrUserAdmin = groupDetails.currUser.isAdmin;
+    const isCurrUserCreator = groupDetails.currUser.isCreator;
 
     return (
         <>
@@ -434,75 +545,86 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                         <section className="flex flex-col items-start flex-nowrap gap-3.5 mt-6 pl-px">
                             <div className="">Group members:</div>
 
-                            <ul className="max-h-72 max-w-44 bg-slate-700 rounded-md py-2 px-3 flex flex-col overflow-y-auto gap-1">
+                            <ul className="max-h-72 max-w-44 bg-slate-700 rounded-md py-2 px-2.5 flex flex-col overflow-y-auto gap-1">
                                 {groupDetails.members.map(
                                     (member: any, index: number) => {
+                                        const isSameUser =
+                                            member._id ===
+                                            groupDetails.currUser._id;
+
+                                        const cond1 =
+                                            isCurrUserAdmin && !member.isAdmin;
+                                        const cond2 =
+                                            isCurrUserCreator && member.isAdmin;
+                                        const cond3 =
+                                            isCurrUserCreator &&
+                                            !member.isAdmin;
+
                                         return (
-                                            <>
-                                                <DropdownMenu key={member._id}>
-                                                    <DropdownMenuTrigger className="px-3 pr-[0.8rem] py-1.5 hover:bg-slate-600 rounded-md">
-                                                        ~ {member.username}
-                                                    </DropdownMenuTrigger>
-                                                    {isCurrUserAdmin && (
-                                                        <DropdownMenuContent className="p-2.5 flex flex-col flex-nowrap gap-2">
-                                                            {isCurrUserAdmin &&
-                                                                !member.isCreator && (
-                                                                    <DropdownMenuItem className="cursor-pointer p-0">
-                                                                        <button
-                                                                            onClick={() =>
-                                                                                promoteToAdmin(
-                                                                                    member._id
-                                                                                )
-                                                                            }
-                                                                            className="px-3 rounded-md py-2 bg-green-700 w-full"
-                                                                        >
-                                                                            Promote
-                                                                            to
-                                                                            admin
-                                                                            &nbsp;&uarr;
-                                                                        </button>
-                                                                    </DropdownMenuItem>
-                                                                )}
+                                            <DropdownMenu key={member._id}>
+                                                <DropdownMenuTrigger className="px-3 pr-[0.8rem] py-1.5 hover:bg-slate-600 focus-within:outline-none focus-within:bg-slate-600 focus-within:ring-2 focus-within:ring-slate-300 outline-1 rounded-md">
+                                                    ~ {member.username}
+                                                </DropdownMenuTrigger>
 
-                                                            {currUserId ===
-                                                                groupDetails
-                                                                    .createdBy
-                                                                    ?._id &&
-                                                            member.isAdmin &&
-                                                            currUserId !==
-                                                                member._id ? (
-                                                                <DropdownMenuItem className="cursor-pointer p-0">
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            demoteFromAdmin(
-                                                                                member._id
-                                                                            )
-                                                                        }
-                                                                        className="py-2 px-3 rounded-md bg-red-800 w-full"
+                                                {(cond1 ||
+                                                    (isCurrUserCreator &&
+                                                        !isSameUser)) && (
+                                                    <DropdownMenuContent className="flex px-2 flex-col gap-2 py-2 items-center">
+                                                        {cond2 ? (
+                                                            <Button
+                                                                onClick={() =>
+                                                                    demoteFromAdmin(
+                                                                        member.userId
+                                                                    )
+                                                                }
+                                                                variant={
+                                                                    "secondary"
+                                                                }
+                                                                className="font-medium w-full"
+                                                            >
+                                                                Demote
+                                                                &nbsp;&darr;
+                                                            </Button>
+                                                        ) : (
+                                                            <>
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        promoteToAdmin(
+                                                                            member.userId
+                                                                        )
+                                                                    }
+                                                                    className="bg-green-400 w-full hover:bg-green-500 font-medium"
+                                                                >
+                                                                    Promote
+                                                                    &nbsp;&uarr;
+                                                                </Button>
+
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        removeFromGroup(
+                                                                            member.userId
+                                                                        )
+                                                                    }
+                                                                    variant={
+                                                                        "destructive"
+                                                                    }
+                                                                    className="font-medium w-full flex flex-row gap-2.5 items-center"
+                                                                >
+                                                                    Remove{" "}
+                                                                    <svg
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        className="size-[1.2rem] mb-px"
+                                                                        viewBox="0 -960 960 960"
+                                                                        fill="#e8eaed"
                                                                     >
-                                                                        Demote
-                                                                        from
-                                                                        admin
-                                                                        &nbsp;&darr;
-                                                                    </button>
-                                                                </DropdownMenuItem>
-                                                            ) : (
-                                                                <></>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    )}
-                                                </DropdownMenu>
-
-                                                {index <
-                                                    groupDetails.members
-                                                        .length -
-                                                        1 && (
-                                                    <Separator
-                                                        className="bg-black h-[1.5px]"
-                                                        orientation="horizontal"
-                                                    />
+                                                                        <path d="M640-520v-80h240v80H640Zm-280 40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z" />
+                                                                    </svg>
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </DropdownMenuContent>
                                                 )}
-                                            </>
+                                            </DropdownMenu>
                                         );
                                     }
                                 )}
