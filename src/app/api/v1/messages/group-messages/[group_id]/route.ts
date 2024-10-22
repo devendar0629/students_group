@@ -70,18 +70,23 @@ export async function POST(
             const randomNumber =
                 Math.floor(Math.random() * (999999998 - 100000001 + 1)) +
                 100000001;
+            const uniqueFileName = randomNumber + "--" + file.name;
 
             const expectedLocalPathToFile = path.join(
                 process.cwd(),
                 "uploads/temp",
-                randomNumber + "--" + file.name
+                uniqueFileName
             );
 
             await uploadFileToDisk(file, expectedLocalPathToFile);
 
             const uploadResponse = await uploaderService.uploadAny(
                 expectedLocalPathToFile,
-                { folder: "posts/media", resource_type: "auto" }
+                {
+                    folder: "posts/media",
+                    resource_type: "auto",
+                    public_id: uniqueFileName,
+                }
             );
 
             await fs.unlink(expectedLocalPathToFile);
@@ -201,8 +206,8 @@ export async function GET(
                     pipeline: [
                         {
                             $sort: {
-                                createdAt: -1
-                            }
+                                createdAt: -1,
+                            },
                         },
                         {
                             $lookup: {
@@ -279,4 +284,4 @@ export async function GET(
     }
 }
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";

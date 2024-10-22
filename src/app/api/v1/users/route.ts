@@ -45,10 +45,12 @@ export async function PATCH(
             const randomNumber =
                 Math.floor(Math.random() * (999999998 - 100000001 + 1)) +
                 100000001;
+            const uniqueFileName = randomNumber + "--" + avatarFile.name;
+
             const expectedLocalPathToFile = path.join(
                 process.cwd(),
                 "uploads/temp",
-                randomNumber + "--" + avatarFile.name
+                uniqueFileName
             );
 
             // upload to disk temporarily
@@ -57,6 +59,7 @@ export async function PATCH(
                 expectedLocalPathToFile,
                 {
                     folder: "users/avatar",
+                    public_id: uniqueFileName,
                 }
             );
 
