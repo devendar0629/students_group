@@ -11,10 +11,8 @@ import React, { useRef, useState } from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import {
     Dialog,
     DialogClose,
@@ -276,11 +274,14 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
         description: groupDetails.description,
     });
 
+    const [isRemoving, setIsRemoving] = useState<boolean>(false);
+    const [isPromoting, setIsPromoting] = useState<boolean>(false);
+    const [isDemoting, setIsDemoting] = useState<boolean>(false);
+
     const groupNameRef = useRef<HTMLInputElement>(null);
     const groupDescriptionRef = useRef<HTMLTextAreaElement>(null);
 
     const { toast } = useToast();
-    const router = useRouter();
 
     const formSubmitHandler: React.FormEventHandler = async (e) => {
         e.preventDefault();
@@ -352,6 +353,8 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
 
     const promoteToAdmin = async (userIdToPromote: string) => {
         try {
+            setIsPromoting(true);
+
             const response = await axios.post(
                 `/api/v1/groups/${groupId}/admin/promote`,
                 {
@@ -365,6 +368,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description:
                         response.data?.error.message ??
                         "Something went wrong while promoting the user to admin",
+                    variant: "destructive",
                 });
             } else {
                 toast({
@@ -372,6 +376,8 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description: "User promoted to admin successfully",
                     className: "bg-green-700 text-slate-100",
                 });
+
+                setTimeout(() => window.location?.reload(), 850);
             }
         } catch (error) {
             if (error instanceof AxiosError) {
@@ -380,6 +386,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description:
                         error.response?.data?.error.message ??
                         "Something went wrong while promoting the user to admin",
+                    variant: "destructive",
                 });
             }
 
@@ -387,12 +394,17 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                 title: "Error",
                 description:
                     "Something went wrong while promoting the user to admin",
+                variant: "destructive",
             });
+        } finally {
+            setIsPromoting(false);
         }
     };
 
     const demoteFromAdmin = async (userIdToDemote: string) => {
         try {
+            setIsDemoting(true);
+
             const response = await axios.post(
                 `/api/v1/groups/${groupId}/admin/demote`,
                 {
@@ -406,6 +418,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description:
                         response.data?.error.message ??
                         "Something went wrong while demoting the user from admin",
+                    variant: "destructive",
                 });
             } else {
                 toast({
@@ -413,6 +426,8 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description: "User demoted from admin successfully",
                     className: "bg-green-700 text-slate-100",
                 });
+
+                setTimeout(() => window.location?.reload(), 850);
             }
         } catch (error) {
             if (error instanceof AxiosError) {
@@ -421,6 +436,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description:
                         error.response?.data?.error.message ??
                         "Something went wrong while demoting the user from admin",
+                    variant: "destructive",
                 });
             }
 
@@ -428,12 +444,17 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                 title: "Error",
                 description:
                     "Something went wrong while demoting the user from admin",
+                variant: "destructive",
             });
+        } finally {
+            setIsDemoting(false);
         }
     };
 
     const removeFromGroup = async (userIdToRemove: string) => {
         try {
+            setIsRemoving(true);
+
             const response = await axios.post(
                 `/api/v1/groups/${groupId}/remove-user`,
                 {
@@ -447,6 +468,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description:
                         response.data?.error.message ??
                         "Something went wrong while removing the user from group",
+                    variant: "destructive",
                 });
             } else {
                 toast({
@@ -454,6 +476,8 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description: "User removed from group successfully",
                     className: "bg-green-700 text-slate-100",
                 });
+
+                setTimeout(() => window.location?.reload(), 850);
             }
         } catch (error) {
             if (error instanceof AxiosError) {
@@ -462,6 +486,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                     description:
                         error.response?.data?.error.message ??
                         "Something went wrong while removing the user from group",
+                    variant: "destructive",
                 });
             }
 
@@ -469,7 +494,10 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                 title: "Error",
                 description:
                     "Something went wrong while removing the user from group",
+                variant: "destructive",
             });
+        } finally {
+            setIsRemoving(false);
         }
     };
 
@@ -572,6 +600,11 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                                                     <DropdownMenuContent className="flex px-2 flex-col gap-2 py-2 items-center">
                                                         {cond2 ? (
                                                             <Button
+                                                                disabled={
+                                                                    isPromoting ||
+                                                                    isDemoting ||
+                                                                    isRemoving
+                                                                }
                                                                 onClick={() =>
                                                                     demoteFromAdmin(
                                                                         member.userId
@@ -580,7 +613,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                                                                 variant={
                                                                     "secondary"
                                                                 }
-                                                                className="font-medium w-full"
+                                                                className="font-medium w-full disabled:cursor-not-allowed"
                                                             >
                                                                 Demote
                                                                 &nbsp;&darr;
@@ -588,18 +621,28 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                                                         ) : (
                                                             <>
                                                                 <Button
+                                                                    disabled={
+                                                                        isPromoting ||
+                                                                        isDemoting ||
+                                                                        isRemoving
+                                                                    }
                                                                     onClick={() =>
                                                                         promoteToAdmin(
                                                                             member.userId
                                                                         )
                                                                     }
-                                                                    className="bg-green-400 w-full hover:bg-green-500 font-medium"
+                                                                    className="bg-green-400 w-full hover:bg-green-500 font-medium disabled:cursor-not-allowed"
                                                                 >
                                                                     Promote
                                                                     &nbsp;&uarr;
                                                                 </Button>
 
                                                                 <Button
+                                                                    disabled={
+                                                                        isPromoting ||
+                                                                        isDemoting ||
+                                                                        isRemoving
+                                                                    }
                                                                     onClick={() =>
                                                                         removeFromGroup(
                                                                             member.userId
@@ -608,7 +651,7 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                                                                     variant={
                                                                         "destructive"
                                                                     }
-                                                                    className="font-medium w-full flex flex-row gap-2.5 items-center"
+                                                                    className="font-medium w-full flex flex-row gap-2.5 items-center disabled:cursor-not-allowed"
                                                                 >
                                                                     Remove{" "}
                                                                     <svg

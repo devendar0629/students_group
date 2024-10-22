@@ -116,6 +116,26 @@ export async function POST(
                 },
             },
             {
+                $lookup: {
+                    from: "groupmembers",
+                    localField: "createdBy",
+                    foreignField: "_id",
+                    as: "createdBy",
+                    pipeline: [
+                        {
+                            $project: {
+                                userId: 1,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                $unwind: {
+                    path: "$createdBy",
+                },
+            },
+            {
                 $unwind: {
                     path: "$currUser",
                 },
@@ -129,6 +149,9 @@ export async function POST(
                         isMember: {
                             $in: [currUserObjectId, "$members.userId"],
                         },
+                        isCreator: {
+                            $eq: [currUserObjectId, "$createdBy.userId"],
+                        },
                     },
                     userToBeDemoted: {
                         isAdmin: {
@@ -136,6 +159,9 @@ export async function POST(
                         },
                         isMember: {
                             $in: [userToBeDemotedObjectId, "$members.userId"],
+                        },
+                        isCreator: {
+                            $eq: [userToBeDemotedObjectId, "$createdBy.userId"],
                         },
                     },
                 },
@@ -165,6 +191,20 @@ export async function POST(
                     },
                 },
                 { status: 400 }
+            );
+        }
+
+        // Cannot do anything with an creator
+        if (groupAggregation.userToBeDemoted.isCreator) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: "Cannot perform action",
+                        cause: "Permission denied",
+                    },
+                },
+                { status: 403 }
             );
         }
 
