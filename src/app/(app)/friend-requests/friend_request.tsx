@@ -103,6 +103,7 @@ const FriendRequest: React.FC<FriendRequestProps> = function ({
         <>
             <div className="flex flex-row flex-nowrap rounded-sm w-full py-2.5 px-5 justify-between items-center bg-sky-900">
                 <UserAvatar
+                    className="rounded-md"
                     width={35}
                     height={35}
                     avatarUrl={friendRequest.sender.avatar}

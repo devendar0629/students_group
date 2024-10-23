@@ -574,31 +574,47 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                             <div className="">Group members:</div>
 
                             <ul className="max-h-72 max-w-44 bg-slate-700 rounded-md py-2 px-2.5 flex flex-col overflow-y-auto gap-1">
-                                {groupDetails.members.map(
-                                    (member: any, index: number) => {
-                                        const isSameUser =
-                                            member._id ===
-                                            groupDetails.currUser._id;
+                                {groupDetails.members.map((member: any) => {
+                                    const isSameUser =
+                                        member._id ===
+                                        groupDetails.currUser._id;
 
-                                        const cond1 =
-                                            isCurrUserAdmin && !member.isAdmin;
-                                        const cond2 =
-                                            isCurrUserCreator && member.isAdmin;
-                                        const cond3 =
-                                            isCurrUserCreator &&
-                                            !member.isAdmin;
+                                    const cond1 =
+                                        isCurrUserAdmin && !member.isAdmin;
+                                    const cond2 =
+                                        isCurrUserCreator && member.isAdmin;
 
-                                        return (
-                                            <DropdownMenu key={member._id}>
-                                                <DropdownMenuTrigger className="px-3 pr-[0.8rem] py-1.5 hover:bg-slate-600 focus-within:outline-none focus-within:bg-slate-600 focus-within:ring-2 focus-within:ring-slate-300 outline-1 rounded-md">
-                                                    ~ {member.username}
-                                                </DropdownMenuTrigger>
+                                    return (
+                                        <DropdownMenu key={member._id}>
+                                            <DropdownMenuTrigger className="px-3 pr-[0.8rem] py-1.5 hover:bg-slate-600 focus-within:outline-none focus-within:bg-slate-600 focus-within:ring-2 focus-within:ring-slate-300 outline-1 rounded-md">
+                                                ~ {member.username}
+                                            </DropdownMenuTrigger>
 
-                                                {(cond1 ||
-                                                    (isCurrUserCreator &&
-                                                        !isSameUser)) && (
-                                                    <DropdownMenuContent className="flex px-2 flex-col gap-2 py-2 items-center">
-                                                        {cond2 ? (
+                                            {(cond1 ||
+                                                (isCurrUserCreator &&
+                                                    !isSameUser)) && (
+                                                <DropdownMenuContent className="flex px-2 flex-col gap-2 py-2 items-center">
+                                                    {cond2 ? (
+                                                        <Button
+                                                            disabled={
+                                                                isPromoting ||
+                                                                isDemoting ||
+                                                                isRemoving
+                                                            }
+                                                            onClick={() =>
+                                                                demoteFromAdmin(
+                                                                    member.userId
+                                                                )
+                                                            }
+                                                            variant={
+                                                                "secondary"
+                                                            }
+                                                            className="font-medium w-full disabled:cursor-not-allowed"
+                                                        >
+                                                            Demote &nbsp;&darr;
+                                                        </Button>
+                                                    ) : (
+                                                        <>
                                                             <Button
                                                                 disabled={
                                                                     isPromoting ||
@@ -606,71 +622,49 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                                                                     isRemoving
                                                                 }
                                                                 onClick={() =>
-                                                                    demoteFromAdmin(
+                                                                    promoteToAdmin(
+                                                                        member.userId
+                                                                    )
+                                                                }
+                                                                className="bg-green-400 w-full hover:bg-green-500 font-medium disabled:cursor-not-allowed"
+                                                            >
+                                                                Promote
+                                                                &nbsp;&uarr;
+                                                            </Button>
+
+                                                            <Button
+                                                                disabled={
+                                                                    isPromoting ||
+                                                                    isDemoting ||
+                                                                    isRemoving
+                                                                }
+                                                                onClick={() =>
+                                                                    removeFromGroup(
                                                                         member.userId
                                                                     )
                                                                 }
                                                                 variant={
-                                                                    "secondary"
+                                                                    "destructive"
                                                                 }
-                                                                className="font-medium w-full disabled:cursor-not-allowed"
+                                                                className="font-medium w-full flex flex-row gap-2.5 items-center disabled:cursor-not-allowed"
                                                             >
-                                                                Demote
-                                                                &nbsp;&darr;
+                                                                Remove{" "}
+                                                                <svg
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                    className="size-[1.2rem] mb-px"
+                                                                    viewBox="0 -960 960 960"
+                                                                    fill="#e8eaed"
+                                                                >
+                                                                    <path d="M640-520v-80h240v80H640Zm-280 40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z" />
+                                                                </svg>
                                                             </Button>
-                                                        ) : (
-                                                            <>
-                                                                <Button
-                                                                    disabled={
-                                                                        isPromoting ||
-                                                                        isDemoting ||
-                                                                        isRemoving
-                                                                    }
-                                                                    onClick={() =>
-                                                                        promoteToAdmin(
-                                                                            member.userId
-                                                                        )
-                                                                    }
-                                                                    className="bg-green-400 w-full hover:bg-green-500 font-medium disabled:cursor-not-allowed"
-                                                                >
-                                                                    Promote
-                                                                    &nbsp;&uarr;
-                                                                </Button>
-
-                                                                <Button
-                                                                    disabled={
-                                                                        isPromoting ||
-                                                                        isDemoting ||
-                                                                        isRemoving
-                                                                    }
-                                                                    onClick={() =>
-                                                                        removeFromGroup(
-                                                                            member.userId
-                                                                        )
-                                                                    }
-                                                                    variant={
-                                                                        "destructive"
-                                                                    }
-                                                                    className="font-medium w-full flex flex-row gap-2.5 items-center disabled:cursor-not-allowed"
-                                                                >
-                                                                    Remove{" "}
-                                                                    <svg
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        className="size-[1.2rem] mb-px"
-                                                                        viewBox="0 -960 960 960"
-                                                                        fill="#e8eaed"
-                                                                    >
-                                                                        <path d="M640-520v-80h240v80H640Zm-280 40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z" />
-                                                                    </svg>
-                                                                </Button>
-                                                            </>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                )}
-                                            </DropdownMenu>
-                                        );
-                                    }
-                                )}
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            )}
+                                        </DropdownMenu>
+                                    );
+                                })}
                             </ul>
                         </section>
 

@@ -12,7 +12,6 @@ import {
     sendMessageInGroupSchemaClient,
     SendMessageInGroupSchemaClient,
 } from "@/lib/validationSchemas/send-message";
-import { formatTimeAgo } from "@/utils/dateformatter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
     Loader2Icon,
@@ -26,7 +25,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import GroupDetails from "./GroupDetails";
 import { Socket } from "socket.io-client";
 import GroupSettings from "./GroupSettings";
-import UserAvatar from "../UserAvatar";
+import GroupMessage from "./GroupMessage";
 
 export type ActiveTab = "Chat" | "Settings";
 
@@ -64,6 +63,7 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
     const {
         register,
         handleSubmit,
+        resetField,
         formState: { errors },
     } = useForm<SendMessageInGroupSchemaClient>({
         resolver: zodResolver(sendMessageInGroupSchemaClient),
@@ -109,6 +109,8 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
                                     variant: "destructive",
                                 });
                             }
+                            messageFormRef.current?.reset();
+                            resetField("content");
 
                             setIsSendingMessage(false);
                         }
@@ -131,6 +133,8 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
                                 variant: "destructive",
                             });
                         }
+
+                        resetField("content");
 
                         setIsSendingMessage(false);
                     }
@@ -260,71 +264,13 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
                     }
                     scrollableTarget="messagesContainer"
                 >
-                    {groupMessages?.map((message: any) => {
-                        const isMessageSentByCurrentUser =
-                            currentUserId === String(message.sender?._id);
-
-                        return (
-                            <>
-                                <div
-                                    key={message._id}
-                                    className={`chat ${
-                                        isMessageSentByCurrentUser
-                                            ? "chat-end"
-                                            : "chat-start"
-                                    }`}
-                                >
-                                    {/* Sender avatar */}
-                                    <div className="chat-image avatar">
-                                        <div className="w-10 rounded-full">
-                                            <UserAvatar
-                                                avatarUrl={
-                                                    message.sender?.avatar
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Chat message content */}
-                                    <div
-                                        className={`chat ${
-                                            isMessageSentByCurrentUser
-                                                ? "chat-end"
-                                                : "chat-start"
-                                        }`}
-                                    >
-                                        <div
-                                            className={`chat-bubble ${
-                                                isMessageSentByCurrentUser
-                                                    ? "chat-bubble-primary"
-                                                    : "chat-bubble-secondary"
-                                            }`}
-                                        >
-                                            {message.content}
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className={`chat-footer text-xs text-muted-foreground line-clamp-1 @footer-container ${
-                                            isMessageSentByCurrentUser
-                                                ? "mr-px"
-                                                : "ml-px"
-                                        }`}
-                                    >
-                                        <div className="flex flex-nowrap gap-1">
-                                            <span className="overflow-hidden max-w-min text-ellipsis w-full line-clamp-1">
-                                                ~{message.sender?.username}
-                                            </span>{" "}
-                                            |{" "}
-                                            {formatTimeAgo(
-                                                new Date(message.createdAt)
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        );
-                    })}
+                    {groupMessages?.map((message: any) => (
+                        <GroupMessage
+                            key={message._id}
+                            currUserId={currentUserId}
+                            message={message}
+                        />
+                    ))}
                 </InfiniteScroll>
 
                 {!hasMoreMessages && (

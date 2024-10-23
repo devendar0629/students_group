@@ -21,7 +21,7 @@ const UserAvatar: React.FC<UserAvatarProps> = function ({
     return (
         <>
             <Image
-                className={`rounded-md ${className}`}
+                className={className}
                 width={width || 40}
                 height={height || 40}
                 alt={alt || "avatar image"}
