@@ -5,10 +5,10 @@ const nextConfig = {
             {
                 protocol: "https",
                 hostname: "res.cloudinary.com",
-                pathname: "/juniorcloud/**"
-            }
+                pathname: `/${process.env.CLOUDINARY_CLOUD_NAME}/**`,
+            },
         ],
-    }
+    },
 };
 
 export default nextConfig;

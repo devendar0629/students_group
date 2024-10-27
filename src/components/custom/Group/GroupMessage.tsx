@@ -1,10 +1,9 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
-import { convertFileNameToNormal } from "@/utils/convertFileName";
 import { formatTimeAgo } from "@/utils/dateformatter";
 import UserAvatar from "../UserAvatar";
-import Image from "next/image";
+import { forwardRef, useRef } from "react";
+import { convertFileNameToNormal } from "@/utils/convertFileName";
 
 interface GroupMessageProps {
     message: any;
@@ -15,54 +14,50 @@ interface GroupMessageFilePreviewProps {
     mediaFile: any;
 }
 
-const GroupMessageFilePreview: React.FC<GroupMessageFilePreviewProps> =
-    function ({ mediaFile }) {
-        return (
-            <>
-                <Image
+const GroupMessageFilePreview = forwardRef<
+    HTMLAnchorElement,
+    GroupMessageFilePreviewProps
+>(({ mediaFile }, ref) => {
+    let url = mediaFile.link;
+    const len = url.length;
+    const extension = url.slice(len - 3, len);
+
+    if (extension === "mp4") {
+        url = `${mediaFile.link.slice(0, len - 4)}.jpg`;
+    }
+
+    const normalFileName = convertFileNameToNormal(mediaFile.fileName);
+
+    return (
+        <>
+            <a
+                ref={ref}
+                href={`/api/v1/media/download?url=${mediaFile.link}&filename=${normalFileName}`}
+                download
+            >
+                <img
                     className="h-[150px] rounded-md w-full"
-                    src={mediaFile.link}
-                    alt=""
+                    src={url}
+                    alt="Post media preview"
                 />
-            </>
-        );
-    };
+            </a>
+        </>
+    );
+});
+
+GroupMessageFilePreview.displayName = "GroupMessageFilePreview";
 
 const GroupMessage: React.FC<GroupMessageProps> = function ({
     message,
     currUserId,
 }) {
     const isSentByCurrUser = currUserId === message.sender._id;
-    const { toast } = useToast();
+    const anchorRef = useRef<HTMLAnchorElement>(null);
 
-    const downloadFile = async () => {
-        if (!message.mediaFile) return;
+    const handleDownloadClick = () => {
+        if (!message.mediaFile || !anchorRef.current) return;
 
-        const imageUrl = message.mediaFile?.link;
-        const response = await fetch(imageUrl);
-        const normalFileName = convertFileNameToNormal(
-            message.mediaFile.fileName
-        );
-
-        if (!response.ok) {
-            toast({
-                title: "Error",
-                description: "Something went wrong while downloading the file",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = normalFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        anchorRef.current.click();
     };
 
     return (
@@ -108,13 +103,14 @@ const GroupMessage: React.FC<GroupMessageProps> = function ({
                                     <div className="size-full relative">
                                         <GroupMessageFilePreview
                                             mediaFile={message.mediaFile}
+                                            ref={anchorRef}
                                         />
 
                                         <div className="bg-gray-900/50 opacity-80 size-full absolute top-0 rounded-md flex items-center justify-center">
                                             <button
-                                                onClick={downloadFile}
                                                 type="button"
                                                 className="rounded-full bg-black/60 p-1.5"
+                                                onClick={handleDownloadClick}
                                             >
                                                 <svg
                                                     className="cursor-pointer"
