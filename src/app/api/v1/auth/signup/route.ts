@@ -72,17 +72,21 @@ export async function POST(
         await newUser.save();
         await userPreferencesInstance.save();
 
-        await resend.emails.send({
-            from: "onboarding@resend.dev",
-            subject: "Verification code",
-            to: process.env.TEST_RECEIVER_MAIL!, // CHANGE IN PRODUCTION !
-            html: "",
-            react: VerificationEmail({
-                name: newUser.name,
-                verificationCode,
-                user_id: newUser._id.toString(),
-            }),
-        });
+        if (process.env.SENDER_MAIL) {
+            await resend.emails.send({
+                from: process.env.SENDER_MAIL,
+                subject: "Verification code",
+                to: newUser.email,
+                html: "",
+                react: VerificationEmail({
+                    name: newUser.name,
+                    verificationCode,
+                    user_id: newUser._id.toString(),
+                }),
+            });
+        } else {
+            console.error("⚠️ Define the SENDER_MAIL in environment variables");
+        }
 
         const responseUser = newUser.toObject();
 
