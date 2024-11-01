@@ -87,9 +87,9 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
             if (file) {
                 file.arrayBuffer().then((buffer) => {
                     socket.timeout(60000).emit(
-                        "client-room-message",
+                        "chat:client_group-message",
                         {
-                            roomName: groupId,
+                            roomName: `G__${groupId}`,
                             content: data.content,
                             mediaFile: {
                                 buffer,
@@ -118,9 +118,9 @@ const SendMessageForm: React.FC<SendMessageFormProps> = ({
                 });
             } else {
                 socket.emit(
-                    "client-room-message",
+                    "chat:client_group-message",
                     {
-                        roomName: groupId,
+                        roomName: `G__${groupId}`,
                         content: data.content,
                         mediaFile: null,
                     },
@@ -209,17 +209,17 @@ const GroupBodyMessagesContainer: React.FC<GroupBodyMessagesContainerProps> = ({
     } = useMessages(currGroupId);
 
     useEffect(() => {
-        const serverRoomMessageHandler = (roomId: string, message: any) => {
+        const serverRoomMessageHandler = (roomId: string, data: any) => {
             if (currGroupId === roomId) {
-                addMessage(message);
+                addMessage(data.message);
             }
         };
 
-        socket?.on("server-room-message", serverRoomMessageHandler);
+        socket?.on("chat:server_group-message", serverRoomMessageHandler);
 
         return () => {
             socket?.removeListener(
-                "server-room-message",
+                "chat:server_group-message",
                 serverRoomMessageHandler
             );
         };
@@ -403,10 +403,8 @@ const GroupBody: React.FC<GroupBodyProps> = function ({
 
             {currentActiveTab === "Settings" && (
                 <GroupSettings
-                    socket={socket}
                     groupDetails={groupData}
                     groupId={groupId}
-                    currUserId={currentUserId}
                     onGroupDetailsChange={(name, description) => {
                         updateGroupDetails({ name, description });
                     }}

@@ -260,6 +260,7 @@ export async function POST(
             {
                 success: true,
                 message: "Friend request sent successfully",
+                data: { sentOn: friendRequestObject.createdAt },
             },
             { status: 201 }
         );

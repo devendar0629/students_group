@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useGroups } from "./clientHooks/useGroupData";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Home() {
     const [currentSelectedGroup, setCurrentSelectedGroup] = useState<
@@ -23,9 +24,9 @@ export default function Home() {
     const [currentLoggedInUser, setCurrentLoggedInUser] = useState<
         TUser & { _id: string }
     >();
-    const [groups, setGroups] = useState<(TGroup & { _id: string })[] | null>(
-        null
-    );
+    const [groups, setGroups] = useState<
+        (Partial<TGroup> & { _id: string })[] | null
+    >(null);
     const [socket, setSocket] = useState<Socket | null>(null);
     const [connectionStatus, setConnectionStatus] = useState<
         "CONNECTED" | "DISCONNECTED"
@@ -33,6 +34,32 @@ export default function Home() {
     const [isFetchingGroups, setIsFetchingGroups] = useState<boolean>(false);
 
     const { joinedGroups } = useGroups(socket);
+    const [hasNewFriendRequest, setHasNewFriendRequest] =
+        useState<boolean>(false);
+    const { toast } = useToast();
+
+    interface ServerGroupMessageNotification {
+        _id: string;
+        groupName: string;
+        message: {
+            _id: string;
+            mediaFile: {
+                link: string;
+                fileName: string;
+                createdAt: NativeDate;
+                updatedAt: NativeDate;
+            };
+            sender: {
+                username: string;
+                avatar: string;
+                name: string;
+                _id: string;
+            };
+            content: string;
+            createdAt: NativeDate;
+            updatedAt: NativeDate;
+        };
+    }
 
     useEffect(() => {
         const _socket = io(process.env.NEXT_PUBLIC_SOCKET_SERVER_URL!, {
@@ -52,7 +79,37 @@ export default function Home() {
         return () => {
             _socket.close();
         };
-    }, []);
+    }, [groups]);
+
+    useEffect(() => {
+        const chatNotificationHandler = async (
+            data: ServerGroupMessageNotification
+        ) => {
+            setGroups((prevGroups) => {
+                return prevGroups!.map((group) =>
+                    group._id === data._id
+                        ? {
+                              _id: data._id,
+                              message: data.message,
+                              name: data.groupName,
+                          }
+                        : group
+                );
+            });
+        };
+
+        socket?.on(
+            "notification:server_group-message",
+            chatNotificationHandler
+        );
+
+        return () => {
+            socket?.removeListener(
+                "notification:server_group-message",
+                chatNotificationHandler
+            );
+        };
+    }, [socket]);
 
     const fetchUserGroups = async () => {
         setIsFetchingGroups(true);
@@ -83,6 +140,28 @@ export default function Home() {
             return null;
         }
     };
+
+    useEffect(() => {
+        const handleFriendRequestEvent = (error: Error | null, data: any) => {
+            setHasNewFriendRequest(true);
+
+            toast({
+                title: "You have new friend requests !",
+            });
+        };
+
+        socket?.on(
+            "notification:server_friend-request",
+            handleFriendRequestEvent
+        );
+
+        return () => {
+            socket?.removeListener(
+                "notification:server_friend-request",
+                handleFriendRequestEvent
+            );
+        };
+    }, [socket, toast]);
 
     useEffect(() => {
         (async function () {
@@ -131,14 +210,22 @@ export default function Home() {
 
                         <div className="flex flex-row flex-nowrap gap-6 items-center">
                             <Link
+                                onClick={() => {
+                                    if (hasNewFriendRequest) {
+                                        setHasNewFriendRequest(false);
+                                    }
+                                }}
                                 className="rounded-[50%] relative bg-transparent p-2.5 hover:bg-slate-500 text-2xl"
                                 href="/friend-requests"
                             >
+                                {hasNewFriendRequest && (
+                                    <div className="h-[5px] w-[4.7px] rounded-full bg-green-400 right-1 absolute" />
+                                )}
                                 <UsersRoundIcon />
                                 <TimerIcon className="absolute bottom-[0.415rem] right-0 h-3" />
                             </Link>
 
-                            <SendFriendRequestPopup />
+                            <SendFriendRequestPopup socket={socket} />
                             <Link
                                 className="rounded-[50%] mr-2 lg:mr-10 border-[2px] border-slate-200 p-[5px] pb-[5.25px]"
                                 href="/user"

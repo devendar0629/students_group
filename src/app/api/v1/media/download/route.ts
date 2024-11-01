@@ -23,7 +23,7 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse>> {
     try {
         const { searchParams } = new URL(request.url);
-        const url = searchParams.get("url");
+        const url = decodeURIComponent(searchParams.get("url") ?? "");
         const filenameFromRequest = searchParams.get("filename");
 
         if (!url || !isValidUrl(url)) {

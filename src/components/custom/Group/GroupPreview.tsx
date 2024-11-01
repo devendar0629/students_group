@@ -16,7 +16,7 @@ const GroupPreview: React.FC<GroupPreviewProps> = function ({
     }
 
     // No group messages
-    if (!group.messages || (group.messages && group.messages.length === 0)) {
+    if (!group.message) {
         return (
             <>
                 <div
@@ -42,19 +42,19 @@ const GroupPreview: React.FC<GroupPreviewProps> = function ({
                 <div>
                     <div className="text-[rgba(255,255,255,.6)] flex flex-row flex-nowrap gap-1 mt-0.5 text-[.925rem] font-light max-w-fit">
                         <p className="font-medium">
-                            ~{group.messages.sender.name}:{" "}
+                            ~{group.message.sender.name}:{" "}
                         </p>
 
                         {/* Show media file name if it exists */}
-                        {group.messages.mediaFile ? (
+                        {group.message.mediaFile ? (
                             <p className="text-ellipsis overflow-hidden whitespace-nowrap lg:w-[25rem] md:w-[16.5rem] sm:w-[14rem] w-[10rem]">
                                 {convertFileNameToNormal(
-                                    group.messages.mediaFile.fileName
+                                    group.message.mediaFile.fileName
                                 )}
                             </p>
                         ) : (
                             <p className="text-ellipsis whitespace-nowrap lg:w-[25rem] md:w-[16.5rem] sm:w-[14rem] w-[10rem]">
-                                {group.messages.content}
+                                {group.message.content}
                             </p>
                         )}
                     </div>

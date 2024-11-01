@@ -79,8 +79,9 @@ const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
                                 <div className="px-2 py-3">
                                     {groupDetails?.members.map(
                                         (member: any, index: number) => (
-                                            <>
+                                            <div key={member._id}>
                                                 <UserPreview
+                                                    key={member._id}
                                                     userName={member.username}
                                                     isAdmin={member.isAdmin}
                                                     isCreator={member.isCreator}
@@ -90,7 +91,7 @@ const GroupDetails: React.FC<PropsWithChildren & GroupDetailsProps> = ({
                                                         .length && (
                                                     <Separator className="my-2" />
                                                 )}
-                                            </>
+                                            </div>
                                         )
                                     )}
                                 </div>

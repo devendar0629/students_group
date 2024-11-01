@@ -14,8 +14,15 @@ import axios from "@/lib/config/axios.config";
 import { AxiosError } from "axios";
 import { Loader2Icon, UserRoundPlusIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import { Socket } from "socket.io-client";
 
-export default function SendFriendRequestPopup() {
+interface SendFriendRequestPopupProps {
+    socket?: Socket | null;
+}
+
+const SendFriendRequestPopup: React.FC<SendFriendRequestPopupProps> = ({
+    socket,
+}) => {
     const usernameRef = useRef<HTMLInputElement | null>(null);
     const { toast } = useToast();
     const [isSendingRequest, setIsSendingRequest] = useState<boolean>(false);
@@ -45,6 +52,11 @@ export default function SendFriendRequestPopup() {
                         response.data.error.message ?? "Something went wrong",
                 });
             } else {
+                socket?.emit("notification:client_friend-request", {
+                    username: usernameToSend,
+                    sentOn: response.data.data?.sentOn,
+                });
+
                 toast({
                     title: "Success",
                     description: "Friend request sent successfully",
@@ -52,6 +64,8 @@ export default function SendFriendRequestPopup() {
                 });
             }
         } catch (error) {
+            console.log("ERROR: ", error);
+
             if (error instanceof AxiosError) {
                 toast({
                     title: "Error",
@@ -110,4 +124,6 @@ export default function SendFriendRequestPopup() {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default SendFriendRequestPopup;

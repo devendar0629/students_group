@@ -56,7 +56,7 @@ export async function GET(
                                 from: "messages",
                                 localField: "messages",
                                 foreignField: "_id",
-                                as: "messages",
+                                as: "message",
                                 pipeline: [
                                     {
                                         $sort: {
@@ -98,6 +98,7 @@ export async function GET(
                                                 {
                                                     $project: {
                                                         name: 1,
+                                                        username: 1,
                                                     },
                                                 },
                                             ],
@@ -114,8 +115,13 @@ export async function GET(
                         },
                         {
                             $unwind: {
-                                path: "$messages",
+                                path: "$message",
                                 preserveNullAndEmptyArrays: true,
+                            },
+                        },
+                        {
+                            $project: {
+                                messages: 0,
                             },
                         },
                     ],

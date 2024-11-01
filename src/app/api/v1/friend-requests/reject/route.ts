@@ -1,3 +1,4 @@
+import { connectDB } from "@/lib/db.config";
 import FriendRequest from "@/models/friend_request.model";
 import User from "@/models/user.model";
 import { getIdFromRequest } from "@/utils/getIdFromRequest";
@@ -8,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(
     request: NextRequest
 ): Promise<NextResponse<ApiResponse>> {
+    await connectDB();
     try {
         const reqData = await request.json();
         const friendRequestId = reqData.friendRequestId;
@@ -24,57 +26,47 @@ export async function POST(
             );
         }
 
-        if (!(await FriendRequest.exists({ _id: friendRequestId }))) {
+        const friendRequest = await FriendRequest.findById(friendRequestId);
+
+        if (!friendRequest) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message: "Friend request doesn't exist",
+                        message: "friend request not found",
                     },
                 },
-                { status: 500 }
+                { status: 404 }
             );
         }
 
-        const friendRequestObject = await FriendRequest.findById(
-            friendRequestId
-        );
+        const currUserId = await getIdFromRequest(request);
+        const currUser = await User.findById(currUserId);
 
-        const currentUserId = await getIdFromRequest(request);
-        const currentUserObject = await User.findById(currentUserId);
+        const friendRequestSender = await User.findById(friendRequest.sender);
 
-        const otherUserObject = await User.findById(
-            friendRequestObject?.receiver
-        );
-
-        if (!otherUserObject) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        message: "The user doesn't exist",
+        if (friendRequestSender) {
+            await Promise.all([
+                User.findByIdAndUpdate(currUser!._id, {
+                    $pull: {
+                        pendingInvitesAndRequests: friendRequest._id,
                     },
+                }),
+                User.findByIdAndUpdate(friendRequestSender!._id, {
+                    $pull: {
+                        pendingInvitesAndRequests: friendRequest._id,
+                    },
+                }),
+            ]);
+        } else {
+            await User.findByIdAndUpdate(currUser!._id, {
+                $pull: {
+                    pendingInvitesAndRequests: friendRequest._id,
                 },
-                { status: 400 }
-            );
+            });
         }
 
-        // remove the friend request objects from their pending list
-        currentUserObject?.pendingInvitesAndRequests.splice(
-            currentUserObject.pendingInvitesAndRequests.indexOf(
-                friendRequestId
-            ),
-            1
-        );
-        otherUserObject?.pendingInvitesAndRequests.splice(
-            otherUserObject.pendingInvitesAndRequests.indexOf(friendRequestId),
-            1
-        );
-
-        await friendRequestObject?.deleteOne();
-
-        await currentUserObject!.save();
-        await otherUserObject.save();
+        await FriendRequest.findByIdAndDelete(friendRequest._id);
 
         return NextResponse.json(
             {
@@ -84,6 +76,8 @@ export async function POST(
             { status: 200 }
         );
     } catch (error) {
+        console.log("Error rejecting friend requests: ", error);
+
         return NextResponse.json(
             {
                 success: false,

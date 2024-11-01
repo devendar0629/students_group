@@ -23,24 +23,19 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 
 interface GroupSettingsProps {
     onBackButtonClick: (value: ActiveTab) => void;
     groupDetails: any;
     groupId: string;
-    currUserId: string;
     onGroupDetailsChange: (name: string, description: string) => void;
-    socket?: Socket | null;
 }
 interface LeaveGroupButtonProps {
     groupId: string;
-    socket?: Socket | null;
 }
 interface AddUserButtonProps {
     groupId: string;
-    socket?: Socket | null;
 }
 
 const LeaveGroupButton: React.FC<LeaveGroupButtonProps> = ({ groupId }) => {
@@ -261,8 +256,6 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
     onBackButtonClick,
     groupDetails,
     groupId,
-    currUserId,
-    socket,
     onGroupDetailsChange,
 }) {
     const [isUpdating, setIsUpdating] = useState<boolean>(false);
@@ -668,9 +661,9 @@ const GroupSettings: React.FC<GroupSettingsProps> = function ({
                             </ul>
                         </section>
 
-                        <AddUserButton socket={socket} groupId={groupId} />
+                        <AddUserButton groupId={groupId} />
 
-                        <LeaveGroupButton socket={socket} groupId={groupId} />
+                        <LeaveGroupButton groupId={groupId} />
                     </div>
                 </div>
             </main>

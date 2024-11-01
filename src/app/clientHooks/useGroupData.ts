@@ -34,7 +34,7 @@ interface Group extends MongooseDocument {
 export const useGroups = (socket: Socket | null) => {
     const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
 
-    socket?.once("joined-groups", (groups) => {
+    socket?.once("server_joined-groups", (groups) => {
         setJoinedGroups(groups);
     });
 

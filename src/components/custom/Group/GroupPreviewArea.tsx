@@ -1,14 +1,13 @@
 "use client";
 
 import { Separator } from "@/components/ui/separator";
-import { type TGroup } from "@/models/group.model";
 import GroupPreview from "./GroupPreview";
 import { nunito } from "@/app/ui/fonts";
 import { Loader2Icon } from "lucide-react";
 import Link from "next/link";
 
 interface GroupsPreviewProps {
-    groups: (TGroup & { _id: string })[] | null | undefined;
+    groups: any;
     isFetching: boolean;
     onSelectedGroupChange: React.Dispatch<React.SetStateAction<any>>;
 }
@@ -75,9 +74,9 @@ const GroupsPreview: React.FC<GroupsPreviewProps> = function ({
                 <Separator orientation="horizontal" className="mb-3.5" />
 
                 <div className="w-full" onClick={handleGroupChange}>
-                    {groups?.map((groupObj, currGroupNumber) => {
+                    {groups?.map((groupObj: any, currGroupNumber: any) => {
                         return (
-                            <>
+                            <div key={groupObj._id}>
                                 <GroupPreview
                                     className={`cursor-pointer group-preview-unit gp-no-${currGroupNumber}`}
                                     key={groupObj._id}
@@ -90,7 +89,7 @@ const GroupsPreview: React.FC<GroupsPreviewProps> = function ({
                                         className="bg-black"
                                     />
                                 )}
-                            </>
+                            </div>
                         );
                     })}
                 </div>
